@@ -18,17 +18,17 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(path: "../swift-incits-4-1986"),
+        .package(path: "../../swift-foundations/swift-ascii"),
         .package(path: "../swift-rfc-5322"),
         .package(path: "../../swift-primitives/swift-standard-library-extensions"),
         .package(path: "../../swift-primitives/swift-binary-primitives"),
-        .package(path: "../../swift-primitives/swift-test-primitives"),
+        .package(path: "../../swift-foundations/swift-testing-extras"),
     ],
     targets: [
         .target(
             name: "RFC 2045",
             dependencies: [
-                .product(name: "INCITS 4 1986", package: "swift-incits-4-1986"),
+                .product(name: "ASCII", package: "swift-ascii"),
                 .product(name: "RFC 5322", package: "swift-rfc-5322"),
                 .product(name: "Standard Library Extensions", package: "swift-standard-library-extensions"),
                 .product(name: "Binary Primitives", package: "swift-binary-primitives"),
@@ -38,7 +38,7 @@ let package = Package(
             name: "RFC 2045".tests,
             dependencies: [
                 "RFC 2045",
-                .product(name: "Test Primitives", package: "swift-test-primitives"),
+                .product(name: "Testing Extras", package: "swift-testing-extras"),
             ]
         ),
     ],

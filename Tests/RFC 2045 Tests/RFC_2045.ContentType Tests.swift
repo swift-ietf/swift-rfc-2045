@@ -3,8 +3,8 @@
 //
 // Tests for RFC_2045.ContentType MIME Content-Type header
 
-import StandardsTestSupport
 import Testing
+import Testing_Extras
 
 @testable import RFC_2045
 
@@ -329,22 +329,20 @@ struct `ContentType - Equality Tests` {
 
 // MARK: - Performance Tests
 
-extension `Performance Tests` {
-    @Suite
-    struct `ContentType - Performance` {
-        @Test(.timed(threshold: .milliseconds(1000)))
-        func `parse 10K content types`() throws {
-            for _ in 0..<10_000 {
-                _ = try RFC_2045.ContentType("text/html; charset=UTF-8")
-            }
+@Suite
+struct `ContentType - Performance` {
+    @Test(.timed(threshold: .milliseconds(1000)))
+    func `parse 10K content types`() throws {
+        for _ in 0..<10_000 {
+            _ = try RFC_2045.ContentType("text/html; charset=UTF-8")
         }
+    }
 
-        @Test(.timed(threshold: .milliseconds(1000)))
-        func `serialize 10K content types`() {
-            let ct = RFC_2045.ContentType.textHTMLUTF8
-            for _ in 0..<10_000 {
-                _ = [UInt8](ct)
-            }
+    @Test(.timed(threshold: .milliseconds(1000)))
+    func `serialize 10K content types`() {
+        let ct = RFC_2045.ContentType.textHTMLUTF8
+        for _ in 0..<10_000 {
+            _ = [UInt8](ct)
         }
     }
 }

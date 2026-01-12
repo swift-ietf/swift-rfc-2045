@@ -5,7 +5,7 @@
 //  Created by Coen ten Thije Boonkkamp on 19/11/2025.
 //
 
-public import INCITS_4_1986
+public import ASCII
 import Standard_Library_Extensions
 
 extension RFC_2045.Parameter {

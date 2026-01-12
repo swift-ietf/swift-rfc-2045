@@ -3,8 +3,8 @@
 //
 // Tests for RFC_2045.Parameter.Name MIME parameter name
 
-import StandardsTestSupport
 import Testing
+import Testing_Extras
 
 @testable import RFC_2045
 
@@ -320,22 +320,20 @@ struct `Parameter.Name - CaseInsensitive Initialization Tests` {
 
 // MARK: - Performance Tests
 
-extension `Performance Tests` {
-    @Suite
-    struct `Parameter.Name - Performance` {
-        @Test(.timed(threshold: .milliseconds(500)))
-        func `parse 100K names`() throws {
-            for _ in 0..<100_000 {
-                _ = try RFC_2045.Parameter.Name(ascii: Array("charset".utf8))
-            }
+@Suite
+struct `Parameter.Name - Performance` {
+    @Test(.timed(threshold: .milliseconds(500)))
+    func `parse 100K names`() throws {
+        for _ in 0..<100_000 {
+            _ = try RFC_2045.Parameter.Name(ascii: Array("charset".utf8))
         }
+    }
 
-        @Test(.timed(threshold: .milliseconds(500)))
-        func `serialize 100K names`() {
-            let name = RFC_2045.Parameter.Name.charset
-            for _ in 0..<100_000 {
-                _ = [UInt8](name)
-            }
+    @Test(.timed(threshold: .milliseconds(500)))
+    func `serialize 100K names`() {
+        let name = RFC_2045.Parameter.Name.charset
+        for _ in 0..<100_000 {
+            _ = [UInt8](name)
         }
     }
 }

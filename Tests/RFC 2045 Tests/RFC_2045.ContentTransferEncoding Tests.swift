@@ -3,8 +3,8 @@
 //
 // Tests for RFC_2045.ContentTransferEncoding MIME Content-Transfer-Encoding header
 
-import StandardsTestSupport
 import Testing
+import Testing_Extras
 
 @testable import RFC_2045
 
@@ -244,22 +244,20 @@ struct `ContentTransferEncoding - Serialization Tests` {
 
 // MARK: - Performance Tests
 
-extension `Performance Tests` {
-    @Suite
-    struct `ContentTransferEncoding - Performance` {
-        @Test(.timed(threshold: .milliseconds(1000)))
-        func `parse 100K encodings`() throws {
-            for _ in 0..<100_000 {
-                _ = try RFC_2045.ContentTransferEncoding("base64")
-            }
+@Suite
+struct `ContentTransferEncoding - Performance` {
+    @Test(.timed(threshold: .milliseconds(1000)))
+    func `parse 100K encodings`() throws {
+        for _ in 0..<100_000 {
+            _ = try RFC_2045.ContentTransferEncoding("base64")
         }
+    }
 
-        @Test(.timed(threshold: .milliseconds(500)))
-        func `serialize 100K encodings`() {
-            let encoding = RFC_2045.ContentTransferEncoding.base64
-            for _ in 0..<100_000 {
-                _ = [UInt8](encoding)
-            }
+    @Test(.timed(threshold: .milliseconds(500)))
+    func `serialize 100K encodings`() {
+        let encoding = RFC_2045.ContentTransferEncoding.base64
+        for _ in 0..<100_000 {
+            _ = [UInt8](encoding)
         }
     }
 }

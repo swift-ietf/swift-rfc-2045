@@ -3,8 +3,8 @@
 //
 // Tests for RFC_2045.Charset MIME character set identifier
 
-import StandardsTestSupport
 import Testing
+import Testing_Extras
 
 @testable import RFC_2045
 
@@ -256,22 +256,20 @@ struct `Charset - Serialization Tests` {
 
 // MARK: - Performance Tests
 
-extension `Performance Tests` {
-    @Suite
-    struct `Charset - Performance` {
-        @Test(.timed(threshold: .milliseconds(500)))
-        func `parse 100K charsets`() throws {
-            for _ in 0..<100_000 {
-                _ = try RFC_2045.Charset(ascii: Array("UTF-8".utf8))
-            }
+@Suite
+struct `Charset - Performance` {
+    @Test(.timed(threshold: .milliseconds(500)))
+    func `parse 100K charsets`() throws {
+        for _ in 0..<100_000 {
+            _ = try RFC_2045.Charset(ascii: Array("UTF-8".utf8))
         }
+    }
 
-        @Test(.timed(threshold: .milliseconds(500)))
-        func `serialize 100K charsets`() {
-            let charset = RFC_2045.Charset.utf8
-            for _ in 0..<100_000 {
-                _ = [UInt8](charset)
-            }
+    @Test(.timed(threshold: .milliseconds(500)))
+    func `serialize 100K charsets`() {
+        let charset = RFC_2045.Charset.utf8
+        for _ in 0..<100_000 {
+            _ = [UInt8](charset)
         }
     }
 }
