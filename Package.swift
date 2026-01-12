@@ -18,11 +18,11 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(path: "../../swift-foundations/swift-ascii"),
-        .package(path: "../swift-rfc-5322"),
-        .package(path: "../../swift-primitives/swift-standard-library-extensions"),
-        .package(path: "../../swift-primitives/swift-binary-primitives"),
-        .package(path: "../../swift-foundations/swift-testing-extras"),
+        .package(url: "https://github.com/swift-foundations/swift-ascii.git", from: "0.0.1"),
+        .package(url: "https://github.com/swift-standards/swift-rfc-5322.git", from: "0.0.1"),
+        .package(url: "https://github.com/swift-primitives/swift-standard-library-extensions.git", from: "0.0.1"),
+        .package(url: "https://github.com/swift-primitives/swift-binary-primitives.git", from: "0.0.1"),
+        .package(url: "https://github.com/swift-foundations/swift-testing-extras.git", from: "0.0.1"),
     ],
     targets: [
         .target(
