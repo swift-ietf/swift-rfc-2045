@@ -186,22 +186,22 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
         var params: [RFC_2045.Parameter.Name: String] = [:]
 
         if let parametersBytes = parametersBytes {
-            // Split on semicolons to get parameter pairs
-            let paramPairs = parametersBytes.split(separator: .ascii.semicolon)
+            let pBytes = Array(parametersBytes)
+            var segStart = 0
 
-            for paramPair in paramPairs {
-                // Split on equals to get key=value
-                guard let equalsIndex = paramPair.firstIndex(of: .ascii.equalsSign) else {
-                    continue
+            func processParam(_ lo: Int, _ hi: Int) {
+                let segment = pBytes[lo..<hi]
+                guard let equalsIndex = segment.firstIndex(of: .ascii.equalsSign) else {
+                    return
                 }
 
-                let keyBytes = paramPair[..<equalsIndex].ascii.trimming(.ascii.whitespaces)
+                let keyBytes = segment[..<equalsIndex].ascii.trimming(.ascii.whitespaces)
                 var valueBytes = Array(
-                    paramPair[(equalsIndex + 1)...].ascii.trimming(.ascii.whitespaces)
+                    segment[(equalsIndex &+ 1)...].ascii.trimming(.ascii.whitespaces)
                 )
 
                 guard !keyBytes.isEmpty else {
-                    continue
+                    return
                 }
 
                 // Handle quoted values - remove surrounding quotes if present
@@ -219,6 +219,14 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
 
                 params[key] = value
             }
+
+            for idx in 0..<pBytes.count {
+                if pBytes[idx] == UInt8.ascii.semicolon {
+                    processParam(segStart, idx)
+                    segStart = idx &+ 1
+                }
+            }
+            processParam(segStart, pBytes.count)
         }
 
         self.init(__unchecked: (), type: type, subtype: subtype, parameters: params)
