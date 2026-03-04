@@ -29,7 +29,7 @@ extension RFC_2045.Parse.Token {
 }
 
 extension RFC_2045.Parse.Token: Parser.`Protocol` {
-    public typealias ParseOutput = Input
+    public typealias Output = Input
     public typealias Failure = RFC_2045.Parse.Token<Input>.Error
 
     @inlinable

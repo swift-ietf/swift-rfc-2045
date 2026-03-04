@@ -54,7 +54,6 @@ extension RFC_2045.ContentType.Parse {
 }
 
 extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
-    public typealias ParseOutput = Output
     public typealias Failure = RFC_2045.ContentType.Parse<Input>.Error
 
     @inlinable

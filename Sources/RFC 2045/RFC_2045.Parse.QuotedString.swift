@@ -29,7 +29,7 @@ extension RFC_2045.Parse.QuotedString {
 }
 
 extension RFC_2045.Parse.QuotedString: Parser.`Protocol` {
-    public typealias ParseOutput = Input
+    public typealias Output = Input
     public typealias Failure = RFC_2045.Parse.QuotedString<Input>.Error
 
     @inlinable
