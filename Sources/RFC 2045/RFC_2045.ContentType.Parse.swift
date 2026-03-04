@@ -1,5 +1,5 @@
 //
-//  RFC_2045.Parse.ContentType.swift
+//  RFC_2045.ContentType.Parse.swift
 //  swift-rfc-2045
 //
 //  MIME Content-Type: type "/" subtype *(";" parameter)
@@ -7,7 +7,7 @@
 
 public import Parser_Primitives
 
-extension RFC_2045.Parse {
+extension RFC_2045.ContentType {
     /// Parses a MIME Content-Type header per RFC 2045 Section 5.1.
     ///
     /// `content = type "/" subtype *(";" OWS parameter)`
@@ -15,14 +15,14 @@ extension RFC_2045.Parse {
     /// Where `parameter = token "=" (token / quoted-string)`
     ///
     /// Returns the type, subtype, and parameters as raw byte slices.
-    public struct ContentType<Input: Collection.Slice.`Protocol`>: Sendable
+    public struct Parse<Input: Collection.Slice.`Protocol`>: Sendable
     where Input: Sendable, Input.Element == UInt8 {
         @inlinable
         public init() {}
     }
 }
 
-extension RFC_2045.Parse.ContentType {
+extension RFC_2045.ContentType.Parse {
     public struct Parameter: Sendable {
         public let name: Input
         public let value: Input
@@ -53,9 +53,9 @@ extension RFC_2045.Parse.ContentType {
     }
 }
 
-extension RFC_2045.Parse.ContentType: Parser.`Protocol` {
+extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
     public typealias ParseOutput = Output
-    public typealias Failure = RFC_2045.Parse.ContentType<Input>.Error
+    public typealias Failure = RFC_2045.ContentType.Parse<Input>.Error
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Output {
