@@ -28,7 +28,7 @@ extension RFC_2045.Parameter {
     /// ```
     public struct Name: Sendable, Codable {
         /// The case-insensitive parameter name (internal to avoid protocol rawValue shadowing)
-        internal let storage: String.CaseInsensitive
+        internal let storage: String.Case.Insensitive
 
         /// Creates a Parameter.Name WITHOUT validation
         ///
@@ -42,7 +42,7 @@ extension RFC_2045.Parameter {
             __unchecked: Void,
             rawValue: String
         ) {
-            self.storage = String.CaseInsensitive(rawValue)
+            self.storage = String.Case.Insensitive(rawValue)
         }
 
         /// The canonical lowercased parameter name.
@@ -54,13 +54,13 @@ extension RFC_2045.Parameter {
         ///
         /// - Parameter rawValue: The parameter name string (case-insensitive).
         public init(rawValue: String) {
-            self.storage = String.CaseInsensitive(rawValue)
+            self.storage = String.Case.Insensitive(rawValue)
         }
 
         /// Creates a parameter name from a case-insensitive string.
         ///
         /// - Parameter caseInsensitive: The case-insensitive parameter name.
-        public init(_ caseInsensitive: String.CaseInsensitive) {
+        public init(_ caseInsensitive: String.Case.Insensitive) {
             self.storage = caseInsensitive
         }
     }
