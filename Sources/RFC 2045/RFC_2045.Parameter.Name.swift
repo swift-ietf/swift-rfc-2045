@@ -7,7 +7,7 @@
 
 public import ASCII_Serializer_Primitives
 public import INCITS_4_1986
-import Standard_Library_Extensions
+public import Format_Primitives
 
 extension RFC_2045.Parameter {
     /// Type-safe MIME parameter name with case-insensitive comparison.
@@ -29,7 +29,7 @@ extension RFC_2045.Parameter {
     /// ```
     public struct Name: Sendable, Codable {
         /// The case-insensitive parameter name (internal to avoid protocol rawValue shadowing)
-        internal let storage: String.Case.Insensitive
+        internal let storage: Format.Case.Insensitive
 
         /// Creates a Parameter.Name WITHOUT validation
         ///
@@ -43,7 +43,7 @@ extension RFC_2045.Parameter {
             __unchecked: Void,
             rawValue: String
         ) {
-            self.storage = String.Case.Insensitive(rawValue)
+            self.storage = Format.Case.Insensitive(rawValue)
         }
 
         /// The canonical lowercased parameter name.
@@ -55,13 +55,13 @@ extension RFC_2045.Parameter {
         ///
         /// - Parameter rawValue: The parameter name string (case-insensitive).
         public init(rawValue: String) {
-            self.storage = String.Case.Insensitive(rawValue)
+            self.storage = Format.Case.Insensitive(rawValue)
         }
 
         /// Creates a parameter name from a case-insensitive string.
         ///
         /// - Parameter caseInsensitive: The case-insensitive parameter name.
-        public init(_ caseInsensitive: String.Case.Insensitive) {
+        public init(_ caseInsensitive: Format.Case.Insensitive) {
             self.storage = caseInsensitive
         }
     }

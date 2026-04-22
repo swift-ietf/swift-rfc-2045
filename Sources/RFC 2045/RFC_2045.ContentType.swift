@@ -7,6 +7,7 @@
 
 public import ASCII_Serializer_Primitives
 public import INCITS_4_1986
+import Format_Primitives
 
 extension RFC_2045 {
     /// MIME Content-Type header

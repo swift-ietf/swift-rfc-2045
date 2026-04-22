@@ -22,6 +22,7 @@ let package = Package(
         .package(path: "../../swift-incits/swift-incits-4-1986"),
         .package(path: "../swift-rfc-5322"),
         .package(path: "../../swift-primitives/swift-standard-library-extensions"),
+        .package(path: "../../swift-primitives/swift-format-primitives"),
         .package(path: "../../swift-primitives/swift-binary-primitives"),
         .package(path: "../../swift-primitives/swift-parser-primitives")
     ],
@@ -33,6 +34,7 @@ let package = Package(
                 .product(name: "INCITS 4 1986", package: "swift-incits-4-1986"),
                 .product(name: "RFC 5322", package: "swift-rfc-5322"),
                 .product(name: "Standard Library Extensions", package: "swift-standard-library-extensions"),
+                .product(name: "Format Primitives", package: "swift-format-primitives"),
                 .product(name: "Binary Primitives", package: "swift-binary-primitives"),
                 .product(name: "Parser Primitives", package: "swift-parser-primitives")
             ]
