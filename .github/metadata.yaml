@@ -1,0 +1,10 @@
+# .github/metadata.yaml
+# Triaged by AI-assisted bulk pass (2026-04-29).
+description: "Swift implementation of RFC 2045: MIME Part One - Format of Internet Message Bodies."
+topics:
+  - standards
+  - rfc
+  - rfc-2045
+  - email
+  - mime
+homepage: "https://swift-institute.org"
