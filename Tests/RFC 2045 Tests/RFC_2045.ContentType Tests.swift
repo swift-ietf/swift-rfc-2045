@@ -265,7 +265,7 @@ struct `ContentType - Serialization Tests` {
     @Test
     func `round-trip simple content type`() throws {
         let original = RFC_2045.ContentType.textPlain
-        let bytes = [UInt8](original)
+        let bytes = [Byte](original)
         let parsed = try RFC_2045.ContentType(ascii: bytes)
         #expect(original == parsed)
     }
@@ -273,7 +273,7 @@ struct `ContentType - Serialization Tests` {
     @Test
     func `round-trip content type with charset`() throws {
         let original = RFC_2045.ContentType.textPlainUTF8
-        let bytes = [UInt8](original)
+        let bytes = [Byte](original)
         let parsed = try RFC_2045.ContentType(ascii: bytes)
         #expect(original == parsed)
     }
@@ -281,7 +281,7 @@ struct `ContentType - Serialization Tests` {
     @Test
     func `round-trip multipart with boundary`() throws {
         let original = RFC_2045.ContentType.multipartMixed(boundary: "----=_Part_1234")
-        let bytes = [UInt8](original)
+        let bytes = [Byte](original)
         let parsed = try RFC_2045.ContentType(ascii: bytes)
         #expect(original == parsed)
     }
@@ -341,7 +341,7 @@ struct `ContentType - Performance` {
     func `serialize 10K content types`() {
         let ct = RFC_2045.ContentType.textHTMLUTF8
         for _ in 0..<10_000 {
-            _ = [UInt8](ct)
+            _ = [Byte](ct)
         }
     }
 }

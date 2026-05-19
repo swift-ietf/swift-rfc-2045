@@ -15,25 +15,25 @@ struct `Parameter.Name - Parsing Tests` {
     struct `Valid Names` {
         @Test
         func `parse charset`() throws {
-            let name = try RFC_2045.Parameter.Name(ascii: Array("charset".utf8))
+            let name = try RFC_2045.Parameter.Name(ascii: Array<Byte>("charset".utf8))
             #expect(name.rawValue == "charset")
         }
 
         @Test
         func `parse boundary`() throws {
-            let name = try RFC_2045.Parameter.Name(ascii: Array("boundary".utf8))
+            let name = try RFC_2045.Parameter.Name(ascii: Array<Byte>("boundary".utf8))
             #expect(name.rawValue == "boundary")
         }
 
         @Test
         func `parse custom parameter`() throws {
-            let name = try RFC_2045.Parameter.Name(ascii: Array("x-custom".utf8))
+            let name = try RFC_2045.Parameter.Name(ascii: Array<Byte>("x-custom".utf8))
             #expect(name.rawValue == "x-custom")
         }
 
         @Test
         func `parse with digits`() throws {
-            let name = try RFC_2045.Parameter.Name(ascii: Array("param123".utf8))
+            let name = try RFC_2045.Parameter.Name(ascii: Array<Byte>("param123".utf8))
             #expect(name.rawValue == "param123")
         }
 
@@ -49,14 +49,14 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `empty bytes throws empty error`() {
             #expect(throws: RFC_2045.Parameter.Name.Error.empty) {
-                try RFC_2045.Parameter.Name(ascii: [UInt8]())
+                try RFC_2045.Parameter.Name(ascii: [Byte]())
             }
         }
 
         @Test
         func `space character throws error`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array("char set".utf8))
+                try RFC_2045.Parameter.Name(ascii: Array<Byte>("char set".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -80,7 +80,7 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `equals sign throws error (tspecial)`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array("param=value".utf8))
+                try RFC_2045.Parameter.Name(ascii: Array<Byte>("param=value".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -92,7 +92,7 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `semicolon throws error (tspecial)`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array("param;name".utf8))
+                try RFC_2045.Parameter.Name(ascii: Array<Byte>("param;name".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -104,7 +104,7 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `solidus throws error (tspecial)`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array("param/name".utf8))
+                try RFC_2045.Parameter.Name(ascii: Array<Byte>("param/name".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -116,7 +116,7 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `quotation mark throws error (tspecial)`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array("param\"name".utf8))
+                try RFC_2045.Parameter.Name(ascii: Array<Byte>("param\"name".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -128,7 +128,7 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `left parenthesis throws error (tspecial)`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array("param(name".utf8))
+                try RFC_2045.Parameter.Name(ascii: Array<Byte>("param(name".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -140,7 +140,7 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `at sign throws error (tspecial)`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array("param@name".utf8))
+                try RFC_2045.Parameter.Name(ascii: Array<Byte>("param@name".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -286,7 +286,7 @@ struct `Parameter.Name - Serialization Tests` {
         RFC_2045.Parameter.Name(rawValue: "x-custom"),
     ])
     func `round-trip serialization`(name: RFC_2045.Parameter.Name) throws {
-        let bytes = [UInt8](name)
+        let bytes = [Byte](name)
         let parsed = try RFC_2045.Parameter.Name(ascii: bytes)
         #expect(name == parsed)
     }
@@ -300,8 +300,8 @@ struct `Parameter.Name - Serialization Tests` {
     @Test
     func `byte serialization produces lowercase`() {
         let name = RFC_2045.Parameter.Name(rawValue: "CHARSET")
-        let bytes = [UInt8](name)
-        #expect(bytes == Array("charset".utf8))
+        let bytes = [Byte](name)
+        #expect(bytes == Array<Byte>("charset".utf8))
     }
 }
 
@@ -324,7 +324,7 @@ struct `Parameter.Name - Performance` {
     @Test(.timed(threshold: .milliseconds(500)))
     func `parse 100K names`() throws {
         for _ in 0..<100_000 {
-            _ = try RFC_2045.Parameter.Name(ascii: Array("charset".utf8))
+            _ = try RFC_2045.Parameter.Name(ascii: Array<Byte>("charset".utf8))
         }
     }
 
@@ -332,7 +332,7 @@ struct `Parameter.Name - Performance` {
     func `serialize 100K names`() {
         let name = RFC_2045.Parameter.Name.charset
         for _ in 0..<100_000 {
-            _ = [UInt8](name)
+            _ = [Byte](name)
         }
     }
 }

@@ -87,29 +87,22 @@ extension RFC_2045 {
     }
 }
 
-extension [UInt8] {
+extension [Byte] {
     public init(
         _ contentTransferEncoding: RFC_2045.ContentTransferEncoding.Type
     ) {
-        self = Array("Content-Transfer-Encoding".utf8)
+        self = Array<Byte>("Content-Transfer-Encoding".utf8)
     }
 }
 
 // MARK: - Serializable
 
 extension RFC_2045.ContentTransferEncoding: Binary.ASCII.Serializable {
-    static public func serialize<Buffer>(
-        _ encoding: RFC_2045.ContentTransferEncoding,
-        into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == UInt8 {
-        buffer.append(contentsOf: Array(encoding.rawValue.utf8))
-    }
-
     public static func serialize<Buffer>(
         ascii encoding: RFC_2045.ContentTransferEncoding,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == UInt8 {
-        buffer.append(contentsOf: Array(encoding.rawValue.utf8))
+    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
+        buffer.append(contentsOf: Array<Byte>(encoding.rawValue.utf8))
     }
 
     /// Parses a Content-Transfer-Encoding header from canonical byte representation
@@ -117,17 +110,40 @@ extension RFC_2045.ContentTransferEncoding: Binary.ASCII.Serializable {
     /// - Parameter bytes: The ASCII byte representation of the header value
     /// - Throws: `RFC_2045.ContentTransferEncoding.Error` if the encoding is not recognized
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
-    where Bytes.Element == UInt8 {
-        // Trim linear whitespace (LWSP per RFC 822) and normalize to lowercase
-        let trimmed = bytes.ascii.trimming([.ascii.space, .ascii.htab])
+    where Bytes.Element == Byte {
+        // Type-up: lift to ASCII.Code at the entry boundary so the body works
+        // against ASCII.Code constants directly. Trimming and lowercasing run
+        // in the ASCII.Code domain — token comparison against ASCII.Code
+        // letter constants stays exact-match.
+        let codes = Array<ASCII.Code>(bytes)
+
+        // Trim linear whitespace (LWSP per RFC 822): SPACE and HTAB
+        var trimStart = codes.startIndex
+        var trimEnd = codes.endIndex
+        while trimStart < trimEnd,
+            codes[trimStart] == ASCII.Code.space || codes[trimStart] == ASCII.Code.htab
+        {
+            trimStart += 1
+        }
+        while trimEnd > trimStart,
+            codes[trimEnd - 1] == ASCII.Code.space || codes[trimEnd - 1] == ASCII.Code.htab
+        {
+            trimEnd -= 1
+        }
+        let trimmed = codes[trimStart..<trimEnd]
 
         guard !trimmed.isEmpty else {
             throw Error.empty
         }
 
-        let normalized = trimmed.ascii.lowercased()
+        // Normalize to lowercase in ASCII.Code domain (ASCII letters only)
+        let normalized: [ASCII.Code] = trimmed.map { code in
+            (code >= ASCII.Code.A && code <= ASCII.Code.Z)
+                ? ASCII.Code(code.underlying &+ UInt8(0x20))  // audit: underlying — ASCII letter case-shift arithmetic
+                : code
+        }
 
-        // Match byte sequences directly (zero String allocation)
+        // Match code sequences directly (zero String allocation)
         switch normalized.count {
         case 4 where normalized == .`7bit`:
             self = .sevenBit
@@ -145,14 +161,23 @@ extension RFC_2045.ContentTransferEncoding: Binary.ASCII.Serializable {
     }
 }
 
-extension [UInt8] {
-    static let `7bit`: Self = [.ascii.`7`, .ascii.b, .ascii.i, .ascii.t]
-    static let `8bit`: Self = [.ascii.`8`, .ascii.b, .ascii.i, .ascii.t]
-    static let base64: Self = [.ascii.b, .ascii.a, .ascii.s, .ascii.e, .ascii.`6`, .ascii.`4`]
-    static let binary: Self = [.ascii.b, .ascii.i, .ascii.n, .ascii.a, .ascii.r, .ascii.y]
+extension [ASCII.Code] {
+    // ASCII.Code token constants for normalized-buffer comparison.
+    // Constants live in the ASCII.Code domain to match the parser body after
+    // the Binary.ASCII.Serializable retyping to Buffer.Element == Byte.
+    static let `7bit`: Self = [ASCII.Code.`7`, ASCII.Code.b, ASCII.Code.i, ASCII.Code.t]
+    static let `8bit`: Self = [ASCII.Code.`8`, ASCII.Code.b, ASCII.Code.i, ASCII.Code.t]
+    static let base64: Self = [
+        ASCII.Code.b, ASCII.Code.a, ASCII.Code.s, ASCII.Code.e, ASCII.Code.`6`, ASCII.Code.`4`,
+    ]
+    static let binary: Self = [
+        ASCII.Code.b, ASCII.Code.i, ASCII.Code.n, ASCII.Code.a, ASCII.Code.r, ASCII.Code.y,
+    ]
     static let quotedPrintable: Self = [
-        .ascii.q, .ascii.u, .ascii.o, .ascii.t, .ascii.e, .ascii.d, .ascii.hyphen,
-        .ascii.p, .ascii.r, .ascii.i, .ascii.n, .ascii.t, .ascii.a, .ascii.b, .ascii.l, .ascii.e,
+        ASCII.Code.q, ASCII.Code.u, ASCII.Code.o, ASCII.Code.t, ASCII.Code.e, ASCII.Code.d,
+        ASCII.Code.hyphen,
+        ASCII.Code.p, ASCII.Code.r, ASCII.Code.i, ASCII.Code.n, ASCII.Code.t,
+        ASCII.Code.a, ASCII.Code.b, ASCII.Code.l, ASCII.Code.e,
     ]
 }
 

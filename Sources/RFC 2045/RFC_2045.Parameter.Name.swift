@@ -92,7 +92,7 @@ extension RFC_2045.Parameter.Name: Binary.ASCII.Serializable {
     public static func serialize<Buffer: RangeReplaceableCollection>(
         ascii name: Self,
         into buffer: inout Buffer
-    ) where Buffer.Element == UInt8 {
+    ) where Buffer.Element == Byte {
         buffer.append(contentsOf: name.rawValue.utf8)
     }
 
@@ -104,12 +104,12 @@ extension RFC_2045.Parameter.Name: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// This is the fundamental parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII bytes)
+    /// - **Domain**: [Byte] (ASCII bytes)
     /// - **Codomain**: RFC_2045.Parameter.Name (structured data)
     ///
     /// String-based parsing is derived as composition:
     /// ```
-    /// String → [UInt8] (UTF-8 bytes) → Parameter.Name
+    /// String → [Byte] (UTF-8 bytes) → Parameter.Name
     /// ```
     ///
     /// ## RFC Reference
@@ -122,53 +122,58 @@ extension RFC_2045.Parameter.Name: Binary.ASCII.Serializable {
     /// ## Example
     ///
     /// ```swift
-    /// let bytes = Array("charset".utf8)
+    /// let bytes = Array<Byte>("charset".utf8)
     /// let name = try RFC_2045.Parameter.Name(ascii: bytes)
     /// ```
     ///
     /// - Parameter bytes: The ASCII byte representation of the parameter name
     /// - Throws: `RFC_2045.Parameter.Name.Error` if the bytes are malformed
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
-    where Bytes.Element == UInt8 {
+    where Bytes.Element == Byte {
         guard !bytes.isEmpty else {
             throw Error.empty
         }
 
+        // Lift to ASCII.Code at the entry boundary so the body works against
+        // ASCII.Code constants directly (parameter-name tokens are strict ASCII).
+        let codes = Array<ASCII.Code>(bytes)
+
         // tspecials that are not allowed in tokens
-        let tspecials: Set<UInt8> = [
-            .ascii.leftParenthesis,  // (
-            .ascii.rightParenthesis,  // )
-            .ascii.lessThanSign,  // <
-            .ascii.greaterThanSign,  // >
-            .ascii.atSign,  // @
-            .ascii.comma,  // ,
-            .ascii.semicolon,  // ;
-            .ascii.colon,  // :
-            .ascii.backslash,  // \
-            .ascii.quotationMark,  // "
-            .ascii.solidus,  // /
-            .ascii.leftSquareBracket,  // [
-            .ascii.rightSquareBracket,  // ]
-            .ascii.questionMark,  // ?
-            .ascii.equalsSign,  // =
+        let tspecials: Set<ASCII.Code> = [
+            ASCII.Code.leftParenthesis,  // (
+            ASCII.Code.rightParenthesis,  // )
+            ASCII.Code.lessThanSign,  // <
+            ASCII.Code.greaterThanSign,  // >
+            ASCII.Code.atSign,  // @
+            ASCII.Code.comma,  // ,
+            ASCII.Code.semicolon,  // ;
+            ASCII.Code.colon,  // :
+            ASCII.Code.backslash,  // \
+            ASCII.Code.quotationMark,  // "
+            ASCII.Code.solidus,  // /
+            ASCII.Code.leftSquareBracket,  // [
+            ASCII.Code.rightSquareBracket,  // ]
+            ASCII.Code.questionMark,  // ?
+            ASCII.Code.equalsSign,  // =
         ]
 
         // Validate all bytes are valid token characters
-        for byte in bytes {
+        for code in codes {
             // Must not be control character or space
-            guard byte > 0x20 && byte < 0x7F else {
+            // audit: underlying — control/space range check is byte-arithmetic; pending byte-arithmetic decision.
+            guard code.underlying > 0x20 && code.underlying < 0x7F else {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
-                    byte: byte,
+                    byte: code,
                     reason: "Parameter names must not contain control characters or space"
                 )
             }
 
             // Must not be tspecial
-            guard !tspecials.contains(byte) else {
+            guard !tspecials.contains(code) else {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
-                    byte: byte,
+                    byte: code,
                     reason: "Parameter names must not contain tspecials: ()<>@,;:\\\"/[]?="
                 )
             }

@@ -70,11 +70,11 @@ extension RFC_2045 {
     }
 }
 
-extension [UInt8] {
+extension [Byte] {
     public init(
         _ contentType: RFC_2045.ContentType.Type
     ) {
-        self = Array("Content-Type".utf8)
+        self = Array<Byte>("Content-Type".utf8)
     }
 }
 
@@ -104,18 +104,18 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
     public static func serialize<Buffer: RangeReplaceableCollection>(
         ascii contentType: Self,
         into buffer: inout Buffer
-    ) where Buffer.Element == UInt8 {
+    ) where Buffer.Element == Byte {
         // type/subtype
         buffer.append(contentsOf: contentType.type.utf8)
-        buffer.append(.ascii.solidus)
+        buffer.append(ASCII.Code.solidus)
         buffer.append(contentsOf: contentType.subtype.utf8)
 
         // parameters: ; name=value
         for (name, value) in contentType.parameters {
-            buffer.append(.ascii.semicolon)
-            buffer.append(.ascii.space)
+            buffer.append(ASCII.Code.semicolon)
+            buffer.append(ASCII.Code.space)
             buffer.append(contentsOf: name.rawValue.utf8)
-            buffer.append(.ascii.equalsSign)
+            buffer.append(ASCII.Code.equalsSign)
             buffer.append(contentsOf: value.utf8)
         }
     }
@@ -128,116 +128,147 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// This is the fundamental parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII bytes)
+    /// - **Domain**: [Byte] (ASCII bytes)
     /// - **Codomain**: RFC_2045.ContentType (structured data)
     ///
     /// String-based parsing is derived as composition:
     /// ```
-    /// String → [UInt8] (UTF-8 bytes) → ContentType
+    /// String → [Byte] (UTF-8 bytes) → ContentType
     /// ```
     ///
     /// ## Example
     ///
     /// ```swift
-    /// let bytes = Array("text/html; charset=UTF-8".utf8)
+    /// let bytes = Array<Byte>("text/html; charset=UTF-8".utf8)
     /// let contentType = try RFC_2045.ContentType(ascii: bytes)
     /// ```
     ///
     /// - Parameter bytes: The ASCII byte representation of the header value
     /// - Throws: `RFC_2045.ContentType.Error` if the bytes are malformed
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
-    where Bytes.Element == UInt8 {
-        let byteArray = Array(bytes)
-
-        guard !byteArray.isEmpty else {
+    where Bytes.Element == Byte {
+        guard !bytes.isEmpty else {
             throw Error.empty
         }
 
-        // Split on first semicolon to separate type/subtype from parameters
-        let typeSubtypeBytes: ArraySlice<UInt8>
-        let parametersBytes: ArraySlice<UInt8>?
+        // Type-up: lift to ASCII.Code at the entry boundary so the body works
+        // against ASCII.Code constants directly (Content-Type grammar is strict ASCII;
+        // non-ASCII bytes are fail-state via downstream validation).
+        let codes = Array<ASCII.Code>(bytes)
 
-        if let firstSemicolon = byteArray.firstIndex(of: .ascii.semicolon) {
-            typeSubtypeBytes = byteArray[..<firstSemicolon]
-            parametersBytes = byteArray[(firstSemicolon + 1)...]
+        // Split on first semicolon to separate type/subtype from parameters
+        let typeSubtypeCodes: ArraySlice<ASCII.Code>
+        let parametersCodes: ArraySlice<ASCII.Code>?
+
+        if let firstSemicolon = codes.firstIndex(of: ASCII.Code.semicolon) {
+            typeSubtypeCodes = codes[..<firstSemicolon]
+            parametersCodes = codes[(firstSemicolon + 1)...]
         } else {
-            typeSubtypeBytes = byteArray[...]
-            parametersBytes = nil
+            typeSubtypeCodes = codes[...]
+            parametersCodes = nil
         }
 
         // Parse type/subtype
-        guard let solidus = typeSubtypeBytes.firstIndex(of: .ascii.solidus) else {
-            throw Error.missingSeparator(String(decoding: byteArray, as: UTF8.self))
+        guard let solidus = typeSubtypeCodes.firstIndex(of: ASCII.Code.solidus) else {
+            throw Error.missingSeparator(String(decoding: bytes, as: UTF8.self))
         }
 
-        let typeBytes = typeSubtypeBytes[..<solidus].trimming(.ascii.whitespaces)
-        let subtypeBytes = typeSubtypeBytes[(solidus + 1)...].trimming(.ascii.whitespaces)
+        let typeCodes = Self.trimmingWhitespace(typeSubtypeCodes[..<solidus])
+        let subtypeCodes = Self.trimmingWhitespace(typeSubtypeCodes[(solidus + 1)...])
 
-        guard !typeBytes.isEmpty else {
-            throw Error.emptyType(String(decoding: byteArray, as: UTF8.self))
+        guard !typeCodes.isEmpty else {
+            throw Error.emptyType(String(decoding: bytes, as: UTF8.self))
         }
 
-        guard !subtypeBytes.isEmpty else {
-            throw Error.emptySubtype(String(decoding: byteArray, as: UTF8.self))
+        guard !subtypeCodes.isEmpty else {
+            throw Error.emptySubtype(String(decoding: bytes, as: UTF8.self))
         }
 
-        let type = String(decoding: typeBytes, as: UTF8.self).lowercased()
-        let subtype = String(decoding: subtypeBytes, as: UTF8.self).lowercased()
+        let type = String(decoding: typeCodes, as: UTF8.self).lowercased()
+        let subtype = String(decoding: subtypeCodes, as: UTF8.self).lowercased()
 
         // Parse parameters if present
         var params: [RFC_2045.Parameter.Name: String] = [:]
 
-        if let parametersBytes = parametersBytes {
-            let pBytes = Array(parametersBytes)
+        if let parametersCodes = parametersCodes {
+            let pCodes = Array(parametersCodes)
             var segStart = 0
 
             func processParam(_ lo: Int, _ hi: Int) {
-                let segment = pBytes[lo..<hi]
-                guard let equalsIndex = segment.firstIndex(of: .ascii.equalsSign) else {
+                let segment = pCodes[lo..<hi]
+                guard let equalsIndex = segment.firstIndex(of: ASCII.Code.equalsSign) else {
                     return
                 }
 
-                let keyBytes = segment[..<equalsIndex].ascii.trimming(.ascii.whitespaces)
-                var valueBytes = Array(
-                    segment[(equalsIndex &+ 1)...].ascii.trimming(.ascii.whitespaces)
+                let keyCodes = Self.trimmingWhitespace(segment[..<equalsIndex])
+                var valueCodes = Array(
+                    Self.trimmingWhitespace(segment[(equalsIndex &+ 1)...])
                 )
 
-                guard !keyBytes.isEmpty else {
+                guard !keyCodes.isEmpty else {
                     return
                 }
 
                 // Handle quoted values - remove surrounding quotes if present
                 let isQuoted =
-                    valueBytes.first == .ascii.quotationMark
-                    && valueBytes.last == .ascii.quotationMark
+                    valueCodes.first == ASCII.Code.quotationMark
+                    && valueCodes.last == ASCII.Code.quotationMark
                 if isQuoted {
-                    valueBytes = Array(valueBytes.dropFirst().dropLast())
+                    valueCodes = Array(valueCodes.dropFirst().dropLast())
                 }
 
                 let key = RFC_2045.Parameter.Name(
-                    rawValue: String(decoding: keyBytes, as: UTF8.self).lowercased()
+                    rawValue: String(decoding: keyCodes, as: UTF8.self).lowercased()
                 )
-                let value = String(decoding: valueBytes, as: UTF8.self)
+                let value = String(decoding: valueCodes, as: UTF8.self)
 
                 params[key] = value
             }
 
-            for idx in 0..<pBytes.count {
-                if pBytes[idx] == UInt8.ascii.semicolon {
+            for idx in 0..<pCodes.count {
+                if pCodes[idx] == ASCII.Code.semicolon {
                     processParam(segStart, idx)
                     segStart = idx &+ 1
                 }
             }
-            processParam(segStart, pBytes.count)
+            processParam(segStart, pCodes.count)
         }
 
         self.init(__unchecked: (), type: type, subtype: subtype, parameters: params)
+    }
+
+    /// Trim leading and trailing ASCII whitespace (SP, HTAB, LF, CR).
+    ///
+    /// Manual trim in the `ASCII.Code` domain — replaces the previous
+    /// `INCITS_4_1986.ASCII<Source>` pipeline (which is `UInt8`-keyed) so
+    /// the parser body can stay in `ASCII.Code` end-to-end after the
+    /// `Binary.ASCII.Serializable` retyping to `Buffer.Element == Byte`.
+    private static func trimmingWhitespace(
+        _ codes: ArraySlice<ASCII.Code>
+    ) -> ArraySlice<ASCII.Code> {
+        var start = codes.startIndex
+        var end = codes.endIndex
+        while start < end && Self.isWhitespace(codes[start]) {
+            start += 1
+        }
+        while end > start && Self.isWhitespace(codes[end - 1]) {
+            end -= 1
+        }
+        return codes[start..<end]
+    }
+
+    /// ASCII whitespace per INCITS 4-1986: SPACE, HTAB, LF, CR.
+    private static func isWhitespace(_ code: ASCII.Code) -> Bool {
+        code == ASCII.Code.space
+            || code == ASCII.Code.htab
+            || code == ASCII.Code.lf
+            || code == ASCII.Code.cr
     }
 }
 
 // MARK: - Byte Serialization
 
-extension [UInt8] {
+extension [Byte] {
     /// Creates ASCII byte representation of an RFC 2045 ContentType
     ///
     /// This is the canonical serialization of MIME Content-Type headers to bytes.
@@ -247,11 +278,11 @@ extension [UInt8] {
     ///
     /// This is the most universal serialization (natural transformation):
     /// - **Domain**: RFC_2045.ContentType (structured data)
-    /// - **Codomain**: [UInt8] (ASCII bytes)
+    /// - **Codomain**: [Byte] (ASCII bytes)
     ///
     /// String representation is derived as composition:
     /// ```
-    /// ContentType → [UInt8] (ASCII) → String (UTF-8 interpretation)
+    /// ContentType → [Byte] (ASCII) → String (UTF-8 interpretation)
     /// ```
     ///
     /// ## Performance
@@ -265,7 +296,7 @@ extension [UInt8] {
     ///
     /// ```swift
     /// let contentType = RFC_2045.ContentType.textPlainUTF8
-    /// let bytes = [UInt8](contentType)
+    /// let bytes = [Byte](contentType)
     /// // bytes represents "text/plain; charset=UTF-8" as ASCII bytes
     /// ```
     ///
@@ -281,15 +312,15 @@ extension [UInt8] {
 
         // Append type/subtype
         self.append(contentsOf: contentType.type.utf8)
-        self.append(.ascii.solidus)  // "/"
+        self.append(ASCII.Code.solidus)  // "/"
         self.append(contentsOf: contentType.subtype.utf8)
 
         // Append parameters in sorted order for consistency
         for (key, value) in contentType.parameters.sorted(by: { $0.key < $1.key }) {
-            self.append(.ascii.semicolon)  // ";"
-            self.append(.ascii.space)
+            self.append(ASCII.Code.semicolon)  // ";"
+            self.append(ASCII.Code.space)
             self.append(contentsOf: key.storage.value.lowercased().utf8)
-            self.append(.ascii.equalsSign)  // "="
+            self.append(ASCII.Code.equalsSign)  // "="
 
             // Quote value if it contains special characters per RFC 2045 Section 5.1
             let needsQuoting = value.contains(where: {
@@ -297,9 +328,9 @@ extension [UInt8] {
             })
 
             if needsQuoting {
-                self.append(.ascii.quotationMark)  // "\""
+                self.append(ASCII.Code.quotationMark)  // "\""
                 self.append(contentsOf: value.utf8)
-                self.append(.ascii.quotationMark)  // "\""
+                self.append(ASCII.Code.quotationMark)  // "\""
             } else {
                 self.append(contentsOf: value.utf8)
             }

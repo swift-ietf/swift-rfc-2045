@@ -98,7 +98,7 @@ extension RFC_2045.Charset: Binary.ASCII.Serializable {
     public static func serialize<Buffer: RangeReplaceableCollection>(
         ascii charset: Self,
         into buffer: inout Buffer
-    ) where Buffer.Element == UInt8 {
+    ) where Buffer.Element == Byte {
         buffer.append(contentsOf: charset.rawValue.utf8)
     }
 
@@ -110,35 +110,39 @@ extension RFC_2045.Charset: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// This is the fundamental parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII bytes)
+    /// - **Domain**: [Byte] (ASCII bytes)
     /// - **Codomain**: RFC_2045.Charset (structured data)
     ///
     /// String-based parsing is derived as composition:
     /// ```
-    /// String → [UInt8] (UTF-8 bytes) → Charset
+    /// String → [Byte] (UTF-8 bytes) → Charset
     /// ```
     ///
     /// ## Example
     ///
     /// ```swift
-    /// let bytes = Array("UTF-8".utf8)
+    /// let bytes = Array<Byte>("UTF-8".utf8)
     /// let charset = try RFC_2045.Charset(ascii: bytes)
     /// ```
     ///
     /// - Parameter bytes: The ASCII byte representation of the charset identifier
     /// - Throws: `RFC_2045.Charset.Error` if the bytes are malformed
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
-    where Bytes.Element == UInt8 {
+    where Bytes.Element == Byte {
         guard !bytes.isEmpty else {
             throw Error.empty
         }
 
+        // Lift to ASCII.Code at the entry boundary so the body works against
+        // ASCII.Code constants directly (charset identifiers are strict ASCII).
+        let codes = Array<ASCII.Code>(bytes)
+
         // Validate all bytes are printable ASCII
-        for byte in bytes {
-            guard byte.ascii.isVisible || byte == .ascii.hyphen else {
+        for code in codes {
+            guard code.isVisible || code == ASCII.Code.hyphen else {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
-                    byte: byte,
+                    byte: code,
                     reason: "Charset identifiers must contain only printable ASCII characters"
                 )
             }
@@ -151,7 +155,7 @@ extension RFC_2045.Charset: Binary.ASCII.Serializable {
 
 // MARK: - Byte Serialization
 
-extension [UInt8] {
+extension [Byte] {
     /// Creates ASCII byte representation of an RFC 2045 Charset
     ///
     /// This is the canonical serialization of charset identifiers to bytes.
@@ -161,24 +165,24 @@ extension [UInt8] {
     ///
     /// This is the most universal serialization (natural transformation):
     /// - **Domain**: RFC_2045.Charset (structured data)
-    /// - **Codomain**: [UInt8] (ASCII bytes)
+    /// - **Codomain**: [Byte] (ASCII bytes)
     ///
     /// String representation is derived as composition:
     /// ```
-    /// Charset → [UInt8] (ASCII) → String (UTF-8 interpretation)
+    /// Charset → [Byte] (ASCII) → String (UTF-8 interpretation)
     /// ```
     ///
     /// ## Example
     ///
     /// ```swift
     /// let charset = RFC_2045.Charset.utf8
-    /// let bytes = [UInt8](charset)
+    /// let bytes = [Byte](charset)
     /// // bytes represents "UTF-8" as ASCII bytes
     /// ```
     ///
     /// - Parameter charset: The charset to serialize
     public init(_ charset: RFC_2045.Charset) {
-        self = Array(charset.rawValue.utf8)
+        self = Array<Byte>(charset.rawValue.utf8)
     }
 }
 

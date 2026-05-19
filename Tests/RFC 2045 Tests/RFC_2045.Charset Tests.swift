@@ -15,19 +15,19 @@ struct `Charset - Parsing Tests` {
     struct `Valid Charsets` {
         @Test
         func `parse UTF-8`() throws {
-            let charset = try RFC_2045.Charset(ascii: Array("UTF-8".utf8))
+            let charset = try RFC_2045.Charset(ascii: Array<Byte>("UTF-8".utf8))
             #expect(charset.rawValue == "UTF-8")
         }
 
         @Test
         func `parse US-ASCII`() throws {
-            let charset = try RFC_2045.Charset(ascii: Array("US-ASCII".utf8))
+            let charset = try RFC_2045.Charset(ascii: Array<Byte>("US-ASCII".utf8))
             #expect(charset.rawValue == "US-ASCII")
         }
 
         @Test
         func `parse ISO-8859-1`() throws {
-            let charset = try RFC_2045.Charset(ascii: Array("ISO-8859-1".utf8))
+            let charset = try RFC_2045.Charset(ascii: Array<Byte>("ISO-8859-1".utf8))
             #expect(charset.rawValue == "ISO-8859-1")
         }
 
@@ -49,7 +49,7 @@ struct `Charset - Parsing Tests` {
         @Test
         func `empty bytes throws empty error`() {
             #expect(throws: RFC_2045.Charset.Error.empty) {
-                try RFC_2045.Charset(ascii: [UInt8]())
+                try RFC_2045.Charset(ascii: [Byte]())
             }
         }
 
@@ -68,7 +68,7 @@ struct `Charset - Parsing Tests` {
         @Test
         func `space character throws error`() {
             #expect {
-                try RFC_2045.Charset(ascii: Array("UTF 8".utf8))
+                try RFC_2045.Charset(ascii: Array<Byte>("UTF 8".utf8))
             } throws: { error in
                 guard case RFC_2045.Charset.Error.invalidCharacter = error else {
                     return false
@@ -234,7 +234,7 @@ struct `Charset - Serialization Tests` {
         RFC_2045.Charset.windows1252,
     ])
     func `round-trip serialization`(charset: RFC_2045.Charset) throws {
-        let bytes = [UInt8](charset)
+        let bytes = [Byte](charset)
         let parsed = try RFC_2045.Charset(ascii: bytes)
         #expect(charset == parsed)
     }
@@ -248,8 +248,8 @@ struct `Charset - Serialization Tests` {
     @Test
     func `byte serialization produces correct output`() {
         let charset = RFC_2045.Charset.utf8
-        let bytes = [UInt8](charset)
-        #expect(bytes == Array("UTF-8".utf8))
+        let bytes = [Byte](charset)
+        #expect(bytes == Array<Byte>("UTF-8".utf8))
     }
 }
 
@@ -260,7 +260,7 @@ struct `Charset - Performance` {
     @Test(.timed(threshold: .milliseconds(500)))
     func `parse 100K charsets`() throws {
         for _ in 0..<100_000 {
-            _ = try RFC_2045.Charset(ascii: Array("UTF-8".utf8))
+            _ = try RFC_2045.Charset(ascii: Array<Byte>("UTF-8".utf8))
         }
     }
 
@@ -268,7 +268,7 @@ struct `Charset - Performance` {
     func `serialize 100K charsets`() {
         let charset = RFC_2045.Charset.utf8
         for _ in 0..<100_000 {
-            _ = [UInt8](charset)
+            _ = [Byte](charset)
         }
     }
 }

@@ -5,6 +5,8 @@
 //  Created by Coen ten Thije Boonkkamp on 25/11/2025.
 //
 
+public import ASCII_Serializer_Primitives
+
 extension RFC_2045.ContentType {
     /// ContentType-specific error type for typed throws
     ///
@@ -43,9 +45,9 @@ extension RFC_2045.ContentType {
         ///
         /// - Parameters:
         ///   - input: The original input string
-        ///   - byte: The invalid byte encountered
+        ///   - byte: The invalid ASCII code encountered
         ///   - reason: Description of why the character is invalid
-        case invalidCharacter(String, byte: UInt8, reason: String)
+        case invalidCharacter(String, byte: ASCII.Code, reason: String)
 
         /// Invalid parameter format
         ///
@@ -69,7 +71,7 @@ extension RFC_2045.ContentType.Error: CustomStringConvertible {
             return "Subtype component is empty in '\(value)'"
         case .invalidCharacter(let value, let byte, let reason):
             return
-                "Invalid byte 0x\(String(byte, radix: 16, uppercase: true)) in '\(value)': \(reason)"
+                "Invalid byte 0x\(String(byte, radix: 16).uppercased()) in '\(value)': \(reason)"
         case .invalidParameter(let value, let reason):
             return "Invalid parameter in '\(value)': \(reason)"
         }
