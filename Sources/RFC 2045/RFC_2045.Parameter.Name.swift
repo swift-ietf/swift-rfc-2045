@@ -159,9 +159,8 @@ extension RFC_2045.Parameter.Name: Binary.ASCII.Serializable {
 
         // Validate all bytes are valid token characters
         for code in codes {
-            // Must not be control character or space
-            // audit: underlying — control/space range check is byte-arithmetic; pending byte-arithmetic decision.
-            guard code.underlying > 0x20 && code.underlying < 0x7F else {
+            // Must not be control character or space (visible ASCII: 0x21–0x7E)
+            guard code.isVisible else {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
                     byte: code,

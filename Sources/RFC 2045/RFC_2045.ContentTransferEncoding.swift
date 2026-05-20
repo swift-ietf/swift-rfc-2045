@@ -137,11 +137,7 @@ extension RFC_2045.ContentTransferEncoding: Binary.ASCII.Serializable {
         }
 
         // Normalize to lowercase in ASCII.Code domain (ASCII letters only)
-        let normalized: [ASCII.Code] = trimmed.map { code in
-            (code >= ASCII.Code.A && code <= ASCII.Code.Z)
-                ? ASCII.Code(code.underlying &+ UInt8(0x20))  // audit: underlying — ASCII letter case-shift arithmetic
-                : code
-        }
+        let normalized: [ASCII.Code] = trimmed.map { ASCII.Code($0.lowercased()) }
 
         // Match code sequences directly (zero String allocation)
         switch normalized.count {
