@@ -126,12 +126,12 @@ extension RFC_2045.ContentTransferEncoding: Binary.ASCII.Serializable {
         var trimStart = codes.startIndex
         var trimEnd = codes.endIndex
         while trimStart < trimEnd,
-            codes[trimStart] == ASCII.Code.space || codes[trimStart] == ASCII.Code.htab
+            codes[trimStart] == Code.space || codes[trimStart] == Code.htab
         {
             trimStart += 1
         }
         while trimEnd > trimStart,
-            codes[trimEnd - 1] == ASCII.Code.space || codes[trimEnd - 1] == ASCII.Code.htab
+            codes[trimEnd - 1] == Code.space || codes[trimEnd - 1] == Code.htab
         {
             trimEnd -= 1
         }

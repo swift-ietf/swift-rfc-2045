@@ -9,6 +9,11 @@ public import ASCII_Serializer_Primitives
 public import INCITS_4_1986
 import Format_Primitives
 
+// `Code` aliases ASCII.Code at file scope, where bare `ASCII` resolves to the
+// module namespace. Inside the `extension [Byte]` blocks below, INCITS's
+// `[ASCII.Code].ASCII` would otherwise shadow `ASCII` via Array member lookup.
+private typealias Code = ASCII.Code
+
 extension RFC_2045 {
     /// MIME Content-Type header
     ///
@@ -107,15 +112,15 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
     ) where Buffer.Element == Byte {
         // type/subtype
         buffer.append(contentsOf: contentType.type.utf8)
-        buffer.append(ASCII.Code.solidus)
+        buffer.append(Code.solidus)
         buffer.append(contentsOf: contentType.subtype.utf8)
 
         // parameters: ; name=value
         for (name, value) in contentType.parameters {
-            buffer.append(ASCII.Code.semicolon)
-            buffer.append(ASCII.Code.space)
+            buffer.append(Code.semicolon)
+            buffer.append(Code.space)
             buffer.append(contentsOf: name.rawValue.utf8)
-            buffer.append(ASCII.Code.equalsSign)
+            buffer.append(Code.equalsSign)
             buffer.append(contentsOf: value.utf8)
         }
     }
@@ -165,7 +170,7 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
         let typeSubtypeCodes: ArraySlice<ASCII.Code>
         let parametersCodes: ArraySlice<ASCII.Code>?
 
-        if let firstSemicolon = codes.firstIndex(of: ASCII.Code.semicolon) {
+        if let firstSemicolon = codes.firstIndex(of: Code.semicolon) {
             typeSubtypeCodes = codes[..<firstSemicolon]
             parametersCodes = codes[(firstSemicolon + 1)...]
         } else {
@@ -174,7 +179,7 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
         }
 
         // Parse type/subtype
-        guard let solidus = typeSubtypeCodes.firstIndex(of: ASCII.Code.solidus) else {
+        guard let solidus = typeSubtypeCodes.firstIndex(of: Code.solidus) else {
             throw Error.missingSeparator(String(decoding: bytes, as: UTF8.self))
         }
 
@@ -201,7 +206,7 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
 
             func processParam(_ lo: Int, _ hi: Int) {
                 let segment = pCodes[lo..<hi]
-                guard let equalsIndex = segment.firstIndex(of: ASCII.Code.equalsSign) else {
+                guard let equalsIndex = segment.firstIndex(of: Code.equalsSign) else {
                     return
                 }
 
@@ -216,8 +221,8 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
 
                 // Handle quoted values - remove surrounding quotes if present
                 let isQuoted =
-                    valueCodes.first == ASCII.Code.quotationMark
-                    && valueCodes.last == ASCII.Code.quotationMark
+                    valueCodes.first == Code.quotationMark
+                    && valueCodes.last == Code.quotationMark
                 if isQuoted {
                     valueCodes = Array(valueCodes.dropFirst().dropLast())
                 }
@@ -231,7 +236,7 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
             }
 
             for idx in 0..<pCodes.count {
-                if pCodes[idx] == ASCII.Code.semicolon {
+                if pCodes[idx] == Code.semicolon {
                     processParam(segStart, idx)
                     segStart = idx &+ 1
                 }
@@ -264,10 +269,10 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
 
     /// ASCII whitespace per INCITS 4-1986: SPACE, HTAB, LF, CR.
     private static func isWhitespace(_ code: ASCII.Code) -> Bool {
-        code == ASCII.Code.space
-            || code == ASCII.Code.htab
-            || code == ASCII.Code.lf
-            || code == ASCII.Code.cr
+        code == Code.space
+            || code == Code.htab
+            || code == Code.lf
+            || code == Code.cr
     }
 }
 
@@ -317,15 +322,15 @@ extension [Byte] {
 
         // Append type/subtype
         self.append(contentsOf: contentType.type.utf8)
-        self.append(ASCII.Code.solidus)  // "/"
+        self.append(Code.solidus)  // "/"
         self.append(contentsOf: contentType.subtype.utf8)
 
         // Append parameters in sorted order for consistency
         for (key, value) in contentType.parameters.sorted(by: { $0.key < $1.key }) {
-            self.append(ASCII.Code.semicolon)  // ";"
-            self.append(ASCII.Code.space)
+            self.append(Code.semicolon)  // ";"
+            self.append(Code.space)
             self.append(contentsOf: key.storage.value.lowercased().utf8)
-            self.append(ASCII.Code.equalsSign)  // "="
+            self.append(Code.equalsSign)  // "="
 
             // Quote value if it contains special characters per RFC 2045 Section 5.1
             let needsQuoting = value.contains(where: {
@@ -333,9 +338,9 @@ extension [Byte] {
             })
 
             if needsQuoting {
-                self.append(ASCII.Code.quotationMark)  // "\""
+                self.append(Code.quotationMark)  // "\""
                 self.append(contentsOf: value.utf8)
-                self.append(ASCII.Code.quotationMark)  // "\""
+                self.append(Code.quotationMark)  // "\""
             } else {
                 self.append(contentsOf: value.utf8)
             }

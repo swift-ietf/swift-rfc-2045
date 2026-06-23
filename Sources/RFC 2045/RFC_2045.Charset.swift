@@ -8,6 +8,10 @@
 public import ASCII_Serializer_Primitives
 public import INCITS_4_1986
 
+// `Code` aliases ASCII.Code at file scope — avoids the INCITS `[ASCII.Code].ASCII`
+// shadow inside the `extension [Byte]` below (see ContentTransferEncoding).
+private typealias Code = ASCII.Code
+
 extension RFC_2045 {
     /// Character set identifier for MIME content
     ///
@@ -144,7 +148,7 @@ extension RFC_2045.Charset: Binary.ASCII.Serializable {
 
         // Validate all bytes are printable ASCII
         for code in codes {
-            guard code.isVisible || code == ASCII.Code.hyphen else {
+            guard code.isVisible || code == Code.hyphen else {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
                     byte: code,
