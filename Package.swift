@@ -24,6 +24,7 @@ let package = Package(
         .package(url: "https://github.com/swift-primitives/swift-standard-library-extensions.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-format-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-binary-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-binary-serializer-primitives.git", branch: "main"),
         .package(url: "https://github.com/swift-primitives/swift-parser-primitives.git", branch: "main")
     ],
     targets: [
@@ -36,6 +37,7 @@ let package = Package(
                 .product(name: "Standard Library Extensions", package: "swift-standard-library-extensions"),
                 .product(name: "Format Primitives", package: "swift-format-primitives"),
                 .product(name: "Binary Primitives", package: "swift-binary-primitives"),
+                .product(name: "Binary Serializable Primitives", package: "swift-binary-serializer-primitives"),
                 .product(name: "Parser Primitives", package: "swift-parser-primitives")
             ]
         ),
