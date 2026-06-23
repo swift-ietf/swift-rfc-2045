@@ -162,23 +162,28 @@ extension RFC_2045.ContentTransferEncoding: Binary.ASCII.Serializable {
     }
 }
 
+// File-scope alias resolves `ASCII.Code` correctly: INCITS's `[ASCII.Code].ASCII`
+// namespace shadows bare `ASCII` inside the `extension [ASCII.Code]` below, so the
+// constants reference this alias (resolved here, outside the shadowed scope).
+private typealias Code = ASCII.Code
+
 extension [ASCII.Code] {
     // ASCII.Code token constants for normalized-buffer comparison.
     // Constants live in the ASCII.Code domain to match the parser body after
     // the Binary.ASCII.Serializable retyping to Buffer.Element == Byte.
-    static let `7bit`: Self = [ASCII.Code.`7`, ASCII.Code.b, ASCII.Code.i, ASCII.Code.t]
-    static let `8bit`: Self = [ASCII.Code.`8`, ASCII.Code.b, ASCII.Code.i, ASCII.Code.t]
+    static let `7bit`: Self = [Code.`7`, Code.b, Code.i, Code.t]
+    static let `8bit`: Self = [Code.`8`, Code.b, Code.i, Code.t]
     static let base64: Self = [
-        ASCII.Code.b, ASCII.Code.a, ASCII.Code.s, ASCII.Code.e, ASCII.Code.`6`, ASCII.Code.`4`,
+        Code.b, Code.a, Code.s, Code.e, Code.`6`, Code.`4`,
     ]
     static let binary: Self = [
-        ASCII.Code.b, ASCII.Code.i, ASCII.Code.n, ASCII.Code.a, ASCII.Code.r, ASCII.Code.y,
+        Code.b, Code.i, Code.n, Code.a, Code.r, Code.y,
     ]
     static let quotedPrintable: Self = [
-        ASCII.Code.q, ASCII.Code.u, ASCII.Code.o, ASCII.Code.t, ASCII.Code.e, ASCII.Code.d,
-        ASCII.Code.hyphen,
-        ASCII.Code.p, ASCII.Code.r, ASCII.Code.i, ASCII.Code.n, ASCII.Code.t,
-        ASCII.Code.a, ASCII.Code.b, ASCII.Code.l, ASCII.Code.e,
+        Code.q, Code.u, Code.o, Code.t, Code.e, Code.d,
+        Code.hyphen,
+        Code.p, Code.r, Code.i, Code.n, Code.t,
+        Code.a, Code.b, Code.l, Code.e,
     ]
 }
 
