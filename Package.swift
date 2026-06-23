@@ -45,6 +45,7 @@ let package = Package(
             name: "RFC 2045 Tests",
             dependencies: [
                 "RFC 2045",
+                .product(name: "Format Primitives", package: "swift-format-primitives"),
             ]
         ),
     ],

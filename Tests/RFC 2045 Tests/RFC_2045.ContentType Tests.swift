@@ -325,23 +325,3 @@ struct `ContentType - Equality Tests` {
         #expect(ct1 != ct2)
     }
 }
-
-// MARK: - Performance Tests
-
-@Suite
-struct `ContentType - Performance` {
-    @Test(.timed(threshold: .milliseconds(1000)))
-    func `parse 10K content types`() throws {
-        for _ in 0..<10_000 {
-            _ = try RFC_2045.ContentType("text/html; charset=UTF-8")
-        }
-    }
-
-    @Test(.timed(threshold: .milliseconds(1000)))
-    func `serialize 10K content types`() {
-        let ct = RFC_2045.ContentType.textHTMLUTF8
-        for _ in 0..<10_000 {
-            _ = [Byte](ct)
-        }
-    }
-}

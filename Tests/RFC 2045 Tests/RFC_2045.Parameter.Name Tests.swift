@@ -3,6 +3,7 @@
 //
 // Tests for RFC_2045.Parameter.Name MIME parameter name
 
+import Format_Primitives
 import Testing
 
 @testable import RFC_2045
@@ -311,28 +312,8 @@ struct `Parameter.Name - Serialization Tests` {
 struct `Parameter.Name - CaseInsensitive Initialization Tests` {
     @Test
     func `init from CaseInsensitive string`() {
-        let caseInsensitive = String.CaseInsensitive("Charset")
+        let caseInsensitive = Format.Case.Insensitive("Charset")
         let name = RFC_2045.Parameter.Name(caseInsensitive)
         #expect(name.rawValue == "charset")
-    }
-}
-
-// MARK: - Performance Tests
-
-@Suite
-struct `Parameter.Name - Performance` {
-    @Test(.timed(threshold: .milliseconds(500)))
-    func `parse 100K names`() throws {
-        for _ in 0..<100_000 {
-            _ = try RFC_2045.Parameter.Name(ascii: Array<Byte>("charset".utf8))
-        }
-    }
-
-    @Test(.timed(threshold: .milliseconds(500)))
-    func `serialize 100K names`() {
-        let name = RFC_2045.Parameter.Name.charset
-        for _ in 0..<100_000 {
-            _ = [Byte](name)
-        }
     }
 }

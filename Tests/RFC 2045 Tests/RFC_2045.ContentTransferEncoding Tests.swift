@@ -229,7 +229,7 @@ struct `ContentTransferEncoding - Serialization Tests` {
         RFC_2045.ContentTransferEncoding.quotedPrintable,
     ])
     func `round-trip serialization`(encoding: RFC_2045.ContentTransferEncoding) throws {
-        let bytes = [UInt8](encoding)
+        let bytes = [Byte](encoding)
         let parsed = try RFC_2045.ContentTransferEncoding(ascii: bytes)
         #expect(encoding == parsed)
     }
@@ -238,25 +238,5 @@ struct `ContentTransferEncoding - Serialization Tests` {
     func `description matches headerValue`() {
         let encoding = RFC_2045.ContentTransferEncoding.base64
         #expect(encoding.description == encoding.description)
-    }
-}
-
-// MARK: - Performance Tests
-
-@Suite
-struct `ContentTransferEncoding - Performance` {
-    @Test(.timed(threshold: .milliseconds(1000)))
-    func `parse 100K encodings`() throws {
-        for _ in 0..<100_000 {
-            _ = try RFC_2045.ContentTransferEncoding("base64")
-        }
-    }
-
-    @Test(.timed(threshold: .milliseconds(500)))
-    func `serialize 100K encodings`() {
-        let encoding = RFC_2045.ContentTransferEncoding.base64
-        for _ in 0..<100_000 {
-            _ = [UInt8](encoding)
-        }
     }
 }

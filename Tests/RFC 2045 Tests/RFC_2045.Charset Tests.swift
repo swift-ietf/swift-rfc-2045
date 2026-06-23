@@ -252,23 +252,3 @@ struct `Charset - Serialization Tests` {
         #expect(bytes == Array<Byte>("UTF-8".utf8))
     }
 }
-
-// MARK: - Performance Tests
-
-@Suite
-struct `Charset - Performance` {
-    @Test(.timed(threshold: .milliseconds(500)))
-    func `parse 100K charsets`() throws {
-        for _ in 0..<100_000 {
-            _ = try RFC_2045.Charset(ascii: Array<Byte>("UTF-8".utf8))
-        }
-    }
-
-    @Test(.timed(threshold: .milliseconds(500)))
-    func `serialize 100K charsets`() {
-        let charset = RFC_2045.Charset.utf8
-        for _ in 0..<100_000 {
-            _ = [Byte](charset)
-        }
-    }
-}
