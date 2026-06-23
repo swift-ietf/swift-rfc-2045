@@ -115,7 +115,12 @@ extension RFC_2045.ContentTransferEncoding: Binary.ASCII.Serializable {
         // against ASCII.Code constants directly. Trimming and lowercasing run
         // in the ASCII.Code domain — token comparison against ASCII.Code
         // letter constants stays exact-match.
-        let codes = Array<ASCII.Code>(bytes)
+        let codes: [ASCII.Code]
+        do {
+            codes = try Array<ASCII.Code>(bytes)
+        } catch {
+            throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))
+        }
 
         // Trim linear whitespace (LWSP per RFC 822): SPACE and HTAB
         var trimStart = codes.startIndex
@@ -137,7 +142,7 @@ extension RFC_2045.ContentTransferEncoding: Binary.ASCII.Serializable {
         }
 
         // Normalize to lowercase in ASCII.Code domain (ASCII letters only)
-        let normalized: [ASCII.Code] = trimmed.map { ASCII.Code($0.lowercased()) }
+        let normalized: [ASCII.Code] = trimmed.map { $0.lowercased() }
 
         // Match code sequences directly (zero String allocation)
         switch normalized.count {

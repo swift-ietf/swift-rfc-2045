@@ -33,6 +33,9 @@ extension RFC_2045.Parameter.Name {
         ///   - byte: The invalid ASCII code encountered
         ///   - reason: Description of why the character is invalid
         case invalidCharacter(String, byte: ASCII.Code, reason: String)
+
+        /// Input contains a non-ASCII byte (RFC 2045 parameter names are ASCII-only)
+        case nonASCII(String)
     }
 }
 
@@ -44,6 +47,8 @@ extension RFC_2045.Parameter.Name.Error: CustomStringConvertible {
         case .invalidCharacter(let value, let byte, let reason):
             return
                 "Invalid byte 0x\(String(byte, radix: 16).uppercased()) in '\(value)': \(reason)"
+        case .nonASCII(let value):
+            return "Non-ASCII byte in '\(value)'"
         }
     }
 }

@@ -55,6 +55,9 @@ extension RFC_2045.ContentType {
         ///   - input: The original input string
         ///   - reason: Description of the parameter error
         case invalidParameter(String, reason: String)
+
+        /// Input contains a non-ASCII byte (RFC 2045 Content-Types are ASCII-only)
+        case nonASCII(String)
     }
 }
 
@@ -74,6 +77,8 @@ extension RFC_2045.ContentType.Error: CustomStringConvertible {
                 "Invalid byte 0x\(String(byte, radix: 16).uppercased()) in '\(value)': \(reason)"
         case .invalidParameter(let value, let reason):
             return "Invalid parameter in '\(value)': \(reason)"
+        case .nonASCII(let value):
+            return "Non-ASCII byte in '\(value)'"
         }
     }
 }

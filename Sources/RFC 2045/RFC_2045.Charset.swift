@@ -135,7 +135,12 @@ extension RFC_2045.Charset: Binary.ASCII.Serializable {
 
         // Lift to ASCII.Code at the entry boundary so the body works against
         // ASCII.Code constants directly (charset identifiers are strict ASCII).
-        let codes = Array<ASCII.Code>(bytes)
+        let codes: [ASCII.Code]
+        do {
+            codes = try Array<ASCII.Code>(bytes)
+        } catch {
+            throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))
+        }
 
         // Validate all bytes are printable ASCII
         for code in codes {

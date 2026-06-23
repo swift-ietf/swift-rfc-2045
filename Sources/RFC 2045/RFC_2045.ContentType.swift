@@ -154,7 +154,12 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
         // Type-up: lift to ASCII.Code at the entry boundary so the body works
         // against ASCII.Code constants directly (Content-Type grammar is strict ASCII;
         // non-ASCII bytes are fail-state via downstream validation).
-        let codes = Array<ASCII.Code>(bytes)
+        let codes: [ASCII.Code]
+        do {
+            codes = try Array<ASCII.Code>(bytes)
+        } catch {
+            throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))
+        }
 
         // Split on first semicolon to separate type/subtype from parameters
         let typeSubtypeCodes: ArraySlice<ASCII.Code>

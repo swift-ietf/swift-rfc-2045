@@ -30,6 +30,9 @@ extension RFC_2045.ContentTransferEncoding {
         /// The value does not match any known encoding mechanism.
         /// RFC 2045 defines: 7bit, 8bit, binary, quoted-printable, base64
         case unrecognizedEncoding(String)
+
+        /// Input contains a non-ASCII byte (RFC 2045 encodings are ASCII-only)
+        case nonASCII(String)
     }
 }
 
@@ -41,6 +44,8 @@ extension RFC_2045.ContentTransferEncoding.Error: CustomStringConvertible {
         case .unrecognizedEncoding(let value):
             return
                 "Unrecognized encoding '\(value)' (must be: 7bit, 8bit, binary, quoted-printable, or base64)"
+        case .nonASCII(let value):
+            return "Non-ASCII byte in '\(value)'"
         }
     }
 }
