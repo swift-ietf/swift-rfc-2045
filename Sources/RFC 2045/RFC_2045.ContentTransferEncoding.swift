@@ -99,7 +99,7 @@ extension [Byte] {
 
 // MARK: - Serializable
 
-extension RFC_2045.ContentTransferEncoding: Serializable, ASCII.Serializable, Binary.Serializable {
+extension RFC_2045.ContentTransferEncoding: ASCII.Serializable, Binary.Serializable {
     /// Serializes `value` as ASCII bytes into `buffer`.
     ///
     /// Explicit witness disambiguating the two constraint-incomparable
@@ -111,6 +111,19 @@ extension RFC_2045.ContentTransferEncoding: Serializable, ASCII.Serializable, Bi
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
         buffer.append(contentsOf: value.serialized)
+    }
+
+    /// Serializes `value` as ASCII codes into `buffer`.
+    ///
+    /// Own `ASCII.Serializable` verb (Phase D): the conformer carries its own
+    /// ASCII-code serialization rather than routing through the transitional
+    /// canonical-`[ASCII.Code]` default. The codes derive from the enum's
+    /// native `rawValue`.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == ASCII.Code {
+        for byte in value.rawValue.utf8 { buffer.append(ASCII.Code(byte)) }
     }
 }
 

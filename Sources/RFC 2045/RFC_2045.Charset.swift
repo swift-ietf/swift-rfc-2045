@@ -100,7 +100,7 @@ public func == (lhs: RFC_2045.Charset?, rhs: String) -> Bool {
 
 // MARK: - Serializable
 
-extension RFC_2045.Charset: Swift.RawRepresentable, Serializable, ASCII.Serializable, Binary.Serializable {
+extension RFC_2045.Charset: Swift.RawRepresentable, ASCII.Serializable, Binary.Serializable {
     /// Creates a charset from `rawValue` (case-insensitive, never fails).
     ///
     /// Re-provides the `Swift.RawRepresentable` requirement (previously inherited
@@ -119,6 +119,18 @@ extension RFC_2045.Charset: Swift.RawRepresentable, Serializable, ASCII.Serializ
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
         buffer.append(contentsOf: value.serialized)
+    }
+
+    /// Serializes `value` as ASCII codes into `buffer`.
+    ///
+    /// Own `ASCII.Serializable` verb (Phase D): the conformer carries its own
+    /// ASCII-code serialization rather than routing through the transitional
+    /// canonical-`[ASCII.Code]` default. The codes derive from `rawValue`.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == ASCII.Code {
+        for byte in value.rawValue.utf8 { buffer.append(ASCII.Code(byte)) }
     }
 }
 
