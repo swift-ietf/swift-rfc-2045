@@ -8,7 +8,6 @@
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
 public import Parseable_ASCII_Primitives
-public import Serializer_Primitives
 public import INCITS_4_1986
 import Format_Primitives
 
@@ -108,13 +107,30 @@ extension RFC_2045.ContentType: Hashable {
 
 // MARK: - Serializable
 
-extension RFC_2045.ContentType: Serializable, ASCII.Serializable, Binary.Serializable {
-    /// Canonical ASCII serializer for the RFC 2045 Content-Type header value.
-    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
-        Serializer_Primitives.Serializer.Pure { contentType, buffer in
-            var bytes: [Byte] = []
-            serializeBytes(contentType, into: &bytes)
-            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+extension RFC_2045.ContentType: ASCII.Serializable, Binary.Serializable {
+    /// Own `ASCII.Serializable` verb ([FAM-012]) — the RFC 2045 Content-Type
+    /// header value, composing the already-re-cut `Parameter.Name` **ASCII** verb
+    /// directly into the `ASCII.Code` buffer (no `.rawValue` property-detour). The
+    /// conformer's own `type` / `subtype` / parameter-value fields are leaf-emitted
+    /// on the ASCII-code substrate. Output is identical to the Binary witness body
+    /// (`serializeBytes`).
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == ASCII.Code {
+        // type/subtype — ContentType's own fields, leaf-emitted.
+        buffer.append(contentsOf: value.type.utf8.map { Code(unchecked: Byte($0)) })
+        buffer.append(Code.solidus)
+        buffer.append(contentsOf: value.subtype.utf8.map { Code(unchecked: Byte($0)) })
+
+        // parameters: ; name=value
+        for (name, parameterValue) in value.parameters {
+            buffer.append(Code.semicolon)
+            buffer.append(Code.space)
+            // Compose the re-cut Parameter.Name ASCII verb (no rawValue detour).
+            RFC_2045.Parameter.Name.serialize(name, into: &buffer)
+            buffer.append(Code.equalsSign)
+            buffer.append(contentsOf: parameterValue.utf8.map { Code(unchecked: Byte($0)) })
         }
     }
 
@@ -132,7 +148,7 @@ extension RFC_2045.ContentType: Serializable, ASCII.Serializable, Binary.Seriali
         _ contentType: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
-        // type/subtype
+        // type/subtype — ContentType's own fields, leaf-emitted.
         buffer.append(contentsOf: contentType.type.utf8)
         buffer.append(Code.solidus)
         buffer.append(contentsOf: contentType.subtype.utf8)
@@ -141,7 +157,8 @@ extension RFC_2045.ContentType: Serializable, ASCII.Serializable, Binary.Seriali
         for (name, value) in contentType.parameters {
             buffer.append(Code.semicolon)
             buffer.append(Code.space)
-            buffer.append(contentsOf: name.rawValue.utf8)
+            // Compose the re-cut Parameter.Name Binary verb (no rawValue detour).
+            RFC_2045.Parameter.Name.serialize(name, into: &buffer)
             buffer.append(Code.equalsSign)
             buffer.append(contentsOf: value.utf8)
         }
