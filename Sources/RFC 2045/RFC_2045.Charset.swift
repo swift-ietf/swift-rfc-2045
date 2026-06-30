@@ -6,6 +6,8 @@
 //
 
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
 public import INCITS_4_1986
 
 // `Code` aliases ASCII.Code at file scope — avoids the INCITS `[ASCII.Code].ASCII`
@@ -98,14 +100,29 @@ public func == (lhs: RFC_2045.Charset?, rhs: String) -> Bool {
 
 // MARK: - Serializable
 
-extension RFC_2045.Charset: Binary.ASCII.Serializable {
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        ascii charset: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: charset.rawValue.utf8)
+extension RFC_2045.Charset: Swift.RawRepresentable, Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Creates a charset from `rawValue` (case-insensitive, never fails).
+    ///
+    /// Re-provides the `Swift.RawRepresentable` requirement (previously inherited
+    /// from the retired combined ASCII serializable protocol).
+    public init?(rawValue: String) {
+        self.init(rawValue)
     }
 
+    /// Serializes `value` as ASCII bytes into `buffer`.
+    ///
+    /// Explicit witness disambiguating the two constraint-incomparable
+    /// `serialize(_:into:)` defaults. The bytes derive from the free
+    /// `String`-RawRepresentable serializer (`.serialized`).
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
+        buffer.append(contentsOf: value.serialized)
+    }
+}
+
+extension RFC_2045.Charset: ASCII.Parseable {
     /// Parses a charset identifier from canonical byte representation (CANONICAL PRIMITIVE)
     ///
     /// This is the primitive parser that works at the byte level.
@@ -131,7 +148,7 @@ extension RFC_2045.Charset: Binary.ASCII.Serializable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the charset identifier
     /// - Throws: `RFC_2045.Charset.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         guard !bytes.isEmpty else {
             throw Error.empty
@@ -197,8 +214,12 @@ extension [Byte] {
 
 // MARK: - Protocol Conformances
 
-extension RFC_2045.Charset: Binary.ASCII.RawRepresentable {}
-extension RFC_2045.Charset: CustomStringConvertible {}
+extension RFC_2045.Charset: CustomStringConvertible {
+    /// The charset's ASCII serialization decoded as a `String`.
+    public var description: String {
+        String(decoding: serialized, as: UTF8.self)
+    }
+}
 
 // MARK: - Common Charsets
 

@@ -6,6 +6,8 @@
 //
 
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
 public import INCITS_4_1986
 
 extension RFC_2045 {
@@ -97,19 +99,35 @@ extension [Byte] {
 
 // MARK: - Serializable
 
-extension RFC_2045.ContentTransferEncoding: Binary.ASCII.Serializable {
-    public static func serialize<Buffer>(
-        ascii encoding: RFC_2045.ContentTransferEncoding,
+extension RFC_2045.ContentTransferEncoding: Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Serializes `value` as ASCII bytes into `buffer`.
+    ///
+    /// Explicit witness disambiguating the two constraint-incomparable
+    /// `serialize(_:into:)` defaults. The bytes derive from the free
+    /// `String`-RawRepresentable serializer (`.serialized`), using the enum's
+    /// native `rawValue`.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
-        buffer.append(contentsOf: Array<Byte>(encoding.rawValue.utf8))
+    ) where Buffer.Element == Byte {
+        buffer.append(contentsOf: value.serialized)
+    }
+}
+
+extension RFC_2045.ContentTransferEncoding: ASCII.Parseable {
+    /// Creates an encoding by validating `string`'s UTF-8 bytes as ASCII.
+    ///
+    /// Re-provides the string convenience initializer (previously inherited from
+    /// the retired combined ASCII serializable protocol).
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: [Byte](string.utf8))
     }
 
     /// Parses a Content-Transfer-Encoding header from canonical byte representation
     ///
     /// - Parameter bytes: The ASCII byte representation of the header value
     /// - Throws: `RFC_2045.ContentTransferEncoding.Error` if the encoding is not recognized
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         // Type-up: lift to ASCII.Code at the entry boundary so the body works
         // against ASCII.Code constants directly. Trimming and lowercasing run
@@ -170,7 +188,7 @@ private typealias Code = ASCII.Code
 extension [ASCII.Code] {
     // ASCII.Code token constants for normalized-buffer comparison.
     // Constants live in the ASCII.Code domain to match the parser body after
-    // the Binary.ASCII.Serializable retyping to Buffer.Element == Byte.
+    // the retyping to Buffer.Element == Byte.
     static let `7bit`: Self = [Code.`7`, Code.b, Code.i, Code.t]
     static let `8bit`: Self = [Code.`8`, Code.b, Code.i, Code.t]
     static let base64: Self = [
@@ -189,8 +207,9 @@ extension [ASCII.Code] {
 
 // MARK: - Protocol Conformances
 
-// Note: Uses Binary.ASCII.Serializable (not RawRepresentable) to get
-// serialize(ascii:) default that uses native enum rawValue
-
-extension RFC_2045.ContentTransferEncoding: CustomStringConvertible {}
-extension RFC_2045.ContentTransferEncoding: RawRepresentable {}
+extension RFC_2045.ContentTransferEncoding: CustomStringConvertible {
+    /// The encoding's ASCII serialization decoded as a `String`.
+    public var description: String {
+        String(decoding: serialized, as: UTF8.self)
+    }
+}

@@ -6,6 +6,9 @@
 //
 
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
+public import Serializer_Primitives
 public import INCITS_4_1986
 import Format_Primitives
 
@@ -105,9 +108,28 @@ extension RFC_2045.ContentType: Hashable {
 
 // MARK: - Serializable
 
-extension RFC_2045.ContentType: Binary.ASCII.Serializable {
+extension RFC_2045.ContentType: Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Canonical ASCII serializer for the RFC 2045 Content-Type header value.
+    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
+        Serializer_Primitives.Serializer.Pure { contentType, buffer in
+            var bytes: [Byte] = []
+            serializeBytes(contentType, into: &bytes)
+            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+        }
+    }
+
+    /// Explicit `Binary.Serializable` witness disambiguating the two
+    /// constraint-incomparable defaults.
     public static func serialize<Buffer: RangeReplaceableCollection>(
-        ascii contentType: Self,
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
+        serializeBytes(value, into: &buffer)
+    }
+
+    /// Byte-domain serialization body (RFC 2045 Content-Type header value).
+    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
+        _ contentType: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
         // type/subtype
@@ -123,6 +145,13 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
             buffer.append(Code.equalsSign)
             buffer.append(contentsOf: value.utf8)
         }
+    }
+}
+
+extension RFC_2045.ContentType: ASCII.Parseable {
+    /// Creates a Content-Type by validating `string`'s UTF-8 bytes as ASCII.
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: [Byte](string.utf8))
     }
 
     /// Parses a Content-Type header from canonical byte representation (CANONICAL PRIMITIVE)
@@ -150,7 +179,7 @@ extension RFC_2045.ContentType: Binary.ASCII.Serializable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the header value
     /// - Throws: `RFC_2045.ContentType.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         guard !bytes.isEmpty else {
             throw Error.empty
@@ -350,10 +379,21 @@ extension [Byte] {
 
 // MARK: - Protocol Conformances
 
-extension RFC_2045.ContentType: Binary.ASCII.RawRepresentable {
-    public typealias RawValue = String
+extension RFC_2045.ContentType: Swift.RawRepresentable {
+    /// The Content-Type's ASCII serialization as a `String`.
+    public var rawValue: String {
+        String(decoding: serialized, as: UTF8.self)
+    }
+
+    public init?(rawValue: String) { try? self.init(rawValue) }
 }
-extension RFC_2045.ContentType: CustomStringConvertible {}
+
+extension RFC_2045.ContentType: CustomStringConvertible {
+    /// The Content-Type's ASCII serialization decoded as a `String`.
+    public var description: String {
+        String(decoding: serialized, as: UTF8.self)
+    }
+}
 
 // MARK: - Computed Properties
 
@@ -362,7 +402,7 @@ extension RFC_2045.ContentType {
     ///
     /// Example: `"text/html; charset=UTF-8"`
     public var headerValue: String {
-        String(self)
+        String(decoding: serialized, as: UTF8.self)
     }
 
     /// Convenience accessor for charset parameter (type-safe)

@@ -6,6 +6,8 @@
 //
 
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
 public import INCITS_4_1986
 public import Format_Primitives
 
@@ -88,12 +90,27 @@ extension RFC_2045.Parameter.Name: Hashable {
 
 // MARK: - Serializable
 
-extension RFC_2045.Parameter.Name: Binary.ASCII.Serializable {
+extension RFC_2045.Parameter.Name: Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Serializes `value` as ASCII bytes into `buffer`.
+    ///
+    /// Explicit witness disambiguating the two constraint-incomparable
+    /// `serialize(_:into:)` defaults. The bytes derive from the free
+    /// `String`-RawRepresentable serializer (`.serialized`).
     public static func serialize<Buffer: RangeReplaceableCollection>(
-        ascii name: Self,
+        _ value: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: name.rawValue.utf8)
+        buffer.append(contentsOf: value.serialized)
+    }
+}
+
+extension RFC_2045.Parameter.Name: ASCII.Parseable {
+    /// Creates a parameter name by validating `string`'s UTF-8 bytes as ASCII.
+    ///
+    /// Re-provides the string convenience initializer (previously inherited from
+    /// the retired combined ASCII serializable protocol).
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: [Byte](string.utf8))
     }
 
     /// Parses a parameter name from canonical byte representation (CANONICAL PRIMITIVE)
@@ -128,7 +145,7 @@ extension RFC_2045.Parameter.Name: Binary.ASCII.Serializable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the parameter name
     /// - Throws: `RFC_2045.Parameter.Name.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         guard !bytes.isEmpty else {
             throw Error.empty
@@ -191,7 +208,12 @@ extension RFC_2045.Parameter.Name: Binary.ASCII.Serializable {
 // MARK: - Protocol Conformances
 
 extension RFC_2045.Parameter.Name: RawRepresentable {}
-extension RFC_2045.Parameter.Name: CustomStringConvertible {}
+extension RFC_2045.Parameter.Name: CustomStringConvertible {
+    /// The parameter name's ASCII serialization decoded as a `String`.
+    public var description: String {
+        String(decoding: serialized, as: UTF8.self)
+    }
+}
 
 extension RFC_2045.Parameter.Name: Comparable {
     public static func < (lhs: RFC_2045.Parameter.Name, rhs: RFC_2045.Parameter.Name) -> Bool {
