@@ -44,7 +44,7 @@ struct `Charset - Performance` {
     @Test(.timed(threshold: .milliseconds(500)))
     func `parse 100K charsets`() throws {
         for _ in 0..<100_000 {
-            _ = try RFC_2045.Charset(ascii: Array<Byte>("UTF-8".utf8))
+            _ = try RFC_2045.Charset(ascii: [Byte]("UTF-8".utf8))
         }
     }
 
@@ -80,7 +80,7 @@ struct `Parameter.Name - Performance` {
     @Test(.timed(threshold: .milliseconds(500)))
     func `parse 100K names`() throws {
         for _ in 0..<100_000 {
-            _ = try RFC_2045.Parameter.Name(ascii: Array<Byte>("charset".utf8))
+            _ = try RFC_2045.Parameter.Name(ascii: [Byte]("charset".utf8))
         }
     }
 

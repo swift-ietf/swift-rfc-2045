@@ -7,9 +7,9 @@
 
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
-public import Parseable_ASCII_Primitives
-public import INCITS_4_1986
 public import Format_Primitives
+public import INCITS_4_1986
+public import Parseable_ASCII_Primitives
 
 extension RFC_2045.Parameter {
     /// Type-safe MIME parameter name with case-insensitive comparison.
@@ -151,7 +151,7 @@ extension RFC_2045.Parameter.Name: ASCII.Parseable {
     /// ## Example
     ///
     /// ```swift
-    /// let bytes = Array<Byte>("charset".utf8)
+    /// let bytes = [Byte]("charset".utf8)
     /// let name = try RFC_2045.Parameter.Name(ascii: bytes)
     /// ```
     ///
@@ -167,7 +167,7 @@ extension RFC_2045.Parameter.Name: ASCII.Parseable {
         // ASCII.Code constants directly (parameter-name tokens are strict ASCII).
         let codes: [ASCII.Code]
         do {
-            codes = try Array<ASCII.Code>(bytes)
+            codes = try [ASCII.Code](bytes)
         } catch {
             throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))
         }

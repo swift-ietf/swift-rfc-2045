@@ -7,9 +7,9 @@
 
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
-public import Parseable_ASCII_Primitives
-public import INCITS_4_1986
 import Format_Primitives
+public import INCITS_4_1986
+public import Parseable_ASCII_Primitives
 
 // `Code` aliases ASCII.Code at file scope, where bare `ASCII` resolves to the
 // module namespace. Inside the `extension [Byte]` blocks below, INCITS's
@@ -81,7 +81,7 @@ extension [Byte] {
     public init(
         _ contentType: RFC_2045.ContentType.Type
     ) {
-        self = Array<Byte>("Content-Type".utf8)
+        self = [Byte]("Content-Type".utf8)
     }
 }
 
@@ -190,7 +190,7 @@ extension RFC_2045.ContentType: ASCII.Parseable {
     /// ## Example
     ///
     /// ```swift
-    /// let bytes = Array<Byte>("text/html; charset=UTF-8".utf8)
+    /// let bytes = [Byte]("text/html; charset=UTF-8".utf8)
     /// let contentType = try RFC_2045.ContentType(ascii: bytes)
     /// ```
     ///
@@ -207,7 +207,7 @@ extension RFC_2045.ContentType: ASCII.Parseable {
         // non-ASCII bytes are fail-state via downstream validation).
         let codes: [ASCII.Code]
         do {
-            codes = try Array<ASCII.Code>(bytes)
+            codes = try [ASCII.Code](bytes)
         } catch {
             throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))
         }

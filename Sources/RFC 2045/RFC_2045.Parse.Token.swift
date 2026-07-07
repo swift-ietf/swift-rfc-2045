@@ -57,18 +57,18 @@ extension RFC_2045.Parse.Token: Parser.`Protocol` {
     static func _isTokenChar(_ byte: UInt8) -> Bool {
         guard byte >= 0x21 && byte <= 0x7E else { return false }
         return switch byte {
-        case 0x28, 0x29: false // ( )
-        case 0x3C, 0x3E: false // < >
-        case 0x40: false       // @
-        case 0x2C: false       // ,
-        case 0x3B: false       // ;
-        case 0x3A: false       // :
-        case 0x5C: false       // \
-        case 0x22: false       // "
-        case 0x2F: false       // /
-        case 0x5B, 0x5D: false // [ ]
-        case 0x3F: false       // ?
-        case 0x3D: false       // =
+        case 0x28, 0x29: false  // ( )
+        case 0x3C, 0x3E: false  // < >
+        case 0x40: false  // @
+        case 0x2C: false  // ,
+        case 0x3B: false  // ;
+        case 0x3A: false  // :
+        case 0x5C: false  // \
+        case 0x22: false  // "
+        case 0x2F: false  // /
+        case 0x5B, 0x5D: false  // [ ]
+        case 0x3F: false  // ?
+        case 0x3D: false  // =
         default: true
         }
     }

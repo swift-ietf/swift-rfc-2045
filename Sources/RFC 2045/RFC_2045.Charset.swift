@@ -7,8 +7,8 @@
 
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
-public import Parseable_ASCII_Primitives
 public import INCITS_4_1986
+public import Parseable_ASCII_Primitives
 
 // `Code` aliases ASCII.Code at file scope — avoids the INCITS `[ASCII.Code].ASCII`
 // shadow inside the `extension [Byte]` below (see ContentTransferEncoding).
@@ -154,7 +154,7 @@ extension RFC_2045.Charset: ASCII.Parseable {
     /// ## Example
     ///
     /// ```swift
-    /// let bytes = Array<Byte>("UTF-8".utf8)
+    /// let bytes = [Byte]("UTF-8".utf8)
     /// let charset = try RFC_2045.Charset(ascii: bytes)
     /// ```
     ///
@@ -170,7 +170,7 @@ extension RFC_2045.Charset: ASCII.Parseable {
         // ASCII.Code constants directly (charset identifiers are strict ASCII).
         let codes: [ASCII.Code]
         do {
-            codes = try Array<ASCII.Code>(bytes)
+            codes = try [ASCII.Code](bytes)
         } catch {
             throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))
         }
@@ -220,7 +220,7 @@ extension [Byte] {
     ///
     /// - Parameter charset: The charset to serialize
     public init(_ charset: RFC_2045.Charset) {
-        self = Array<Byte>(charset.rawValue.utf8)
+        self = [Byte](charset.rawValue.utf8)
     }
 }
 

@@ -7,8 +7,8 @@
 
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
-public import Parseable_ASCII_Primitives
 public import INCITS_4_1986
+public import Parseable_ASCII_Primitives
 
 extension RFC_2045 {
     /// MIME Content-Transfer-Encoding header
@@ -93,7 +93,7 @@ extension [Byte] {
     public init(
         _ contentTransferEncoding: RFC_2045.ContentTransferEncoding.Type
     ) {
-        self = Array<Byte>("Content-Transfer-Encoding".utf8)
+        self = [Byte]("Content-Transfer-Encoding".utf8)
     }
 }
 
@@ -148,7 +148,7 @@ extension RFC_2045.ContentTransferEncoding: ASCII.Parseable {
         // letter constants stays exact-match.
         let codes: [ASCII.Code]
         do {
-            codes = try Array<ASCII.Code>(bytes)
+            codes = try [ASCII.Code](bytes)
         } catch {
             throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))
         }

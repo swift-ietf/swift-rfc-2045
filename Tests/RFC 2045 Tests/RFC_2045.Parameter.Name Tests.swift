@@ -16,25 +16,25 @@ struct `Parameter.Name - Parsing Tests` {
     struct `Valid Names` {
         @Test
         func `parse charset`() throws {
-            let name = try RFC_2045.Parameter.Name(ascii: Array<Byte>("charset".utf8))
+            let name = try RFC_2045.Parameter.Name(ascii: [Byte]("charset".utf8))
             #expect(name.rawValue == "charset")
         }
 
         @Test
         func `parse boundary`() throws {
-            let name = try RFC_2045.Parameter.Name(ascii: Array<Byte>("boundary".utf8))
+            let name = try RFC_2045.Parameter.Name(ascii: [Byte]("boundary".utf8))
             #expect(name.rawValue == "boundary")
         }
 
         @Test
         func `parse custom parameter`() throws {
-            let name = try RFC_2045.Parameter.Name(ascii: Array<Byte>("x-custom".utf8))
+            let name = try RFC_2045.Parameter.Name(ascii: [Byte]("x-custom".utf8))
             #expect(name.rawValue == "x-custom")
         }
 
         @Test
         func `parse with digits`() throws {
-            let name = try RFC_2045.Parameter.Name(ascii: Array<Byte>("param123".utf8))
+            let name = try RFC_2045.Parameter.Name(ascii: [Byte]("param123".utf8))
             #expect(name.rawValue == "param123")
         }
 
@@ -57,7 +57,7 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `space character throws error`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array<Byte>("char set".utf8))
+                try RFC_2045.Parameter.Name(ascii: [Byte]("char set".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -81,7 +81,7 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `equals sign throws error (tspecial)`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array<Byte>("param=value".utf8))
+                try RFC_2045.Parameter.Name(ascii: [Byte]("param=value".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -93,7 +93,7 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `semicolon throws error (tspecial)`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array<Byte>("param;name".utf8))
+                try RFC_2045.Parameter.Name(ascii: [Byte]("param;name".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -105,7 +105,7 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `solidus throws error (tspecial)`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array<Byte>("param/name".utf8))
+                try RFC_2045.Parameter.Name(ascii: [Byte]("param/name".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -117,7 +117,7 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `quotation mark throws error (tspecial)`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array<Byte>("param\"name".utf8))
+                try RFC_2045.Parameter.Name(ascii: [Byte]("param\"name".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -129,7 +129,7 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `left parenthesis throws error (tspecial)`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array<Byte>("param(name".utf8))
+                try RFC_2045.Parameter.Name(ascii: [Byte]("param(name".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -141,7 +141,7 @@ struct `Parameter.Name - Parsing Tests` {
         @Test
         func `at sign throws error (tspecial)`() {
             #expect {
-                try RFC_2045.Parameter.Name(ascii: Array<Byte>("param@name".utf8))
+                try RFC_2045.Parameter.Name(ascii: [Byte]("param@name".utf8))
             } throws: { error in
                 guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
                     return false
@@ -302,7 +302,7 @@ struct `Parameter.Name - Serialization Tests` {
     func `byte serialization produces lowercase`() {
         let name = RFC_2045.Parameter.Name(rawValue: "CHARSET")
         let bytes = [Byte](name)
-        #expect(bytes == Array<Byte>("charset".utf8))
+        #expect(bytes == [Byte]("charset".utf8))
     }
 }
 
