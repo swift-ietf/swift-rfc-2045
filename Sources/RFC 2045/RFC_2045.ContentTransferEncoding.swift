@@ -61,30 +61,32 @@ extension RFC_2045 {
         /// Encodes arbitrary binary data into printable ASCII. Most common
         /// encoding for attachments and non-text content.
         case base64 = "base64"
+    }
+}
 
-        /// Returns true if this encoding is binary-safe
-        ///
-        /// Binary-safe encodings (base64, quoted-printable) can represent
-        /// arbitrary binary data. Non-binary-safe encodings have restrictions.
-        public var isBinarySafe: Bool {
-            switch self {
-            case .base64, .quotedPrintable:
-                return true
-            case .sevenBit, .eightBit, .binary:
-                return false
-            }
+extension RFC_2045.ContentTransferEncoding {
+    /// Returns true if this encoding is binary-safe
+    ///
+    /// Binary-safe encodings (base64, quoted-printable) can represent
+    /// arbitrary binary data. Non-binary-safe encodings have restrictions.
+    public var isBinarySafe: Bool {
+        switch self {
+        case .base64, .quotedPrintable:
+            return true
+        case .sevenBit, .eightBit, .binary:
+            return false
         }
+    }
 
-        /// Returns true if this encoding requires special handling
-        ///
-        /// Encoded content (base64, quoted-printable) must be decoded before use.
-        public var isEncoded: Bool {
-            switch self {
-            case .base64, .quotedPrintable:
-                return true
-            case .sevenBit, .eightBit, .binary:
-                return false
-            }
+    /// Returns true if this encoding requires special handling
+    ///
+    /// Encoded content (base64, quoted-printable) must be decoded before use.
+    public var isEncoded: Bool {
+        switch self {
+        case .base64, .quotedPrintable:
+            return true
+        case .sevenBit, .eightBit, .binary:
+            return false
         }
     }
 }

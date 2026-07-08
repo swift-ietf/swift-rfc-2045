@@ -54,7 +54,7 @@ extension RFC_2045.Parse.Token: Parser.`Protocol` {
 
     /// Visible ASCII (0x21–0x7E) excluding tspecials.
     @inlinable
-    static func _isTokenChar(_ byte: UInt8) -> Bool {
+    package static func _isTokenChar(_ byte: UInt8) -> Bool {
         guard byte >= 0x21 && byte <= 0x7E else { return false }
         return switch byte {
         case 0x28, 0x29: false  // ( )

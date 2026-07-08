@@ -48,11 +48,6 @@ extension RFC_2045.Parameter {
             self.storage = Format.Case.Insensitive(rawValue)
         }
 
-        /// The canonical lowercased parameter name.
-        public var rawValue: String {
-            storage.value.lowercased()
-        }
-
         /// Creates a parameter name from a raw string value.
         ///
         /// - Parameter rawValue: The parameter name string (case-insensitive).
@@ -66,6 +61,13 @@ extension RFC_2045.Parameter {
         public init(_ caseInsensitive: Format.Case.Insensitive) {
             self.storage = caseInsensitive
         }
+    }
+}
+
+extension RFC_2045.Parameter.Name {
+    /// The canonical lowercased parameter name.
+    public var rawValue: String {
+        storage.value.lowercased()
     }
 }
 

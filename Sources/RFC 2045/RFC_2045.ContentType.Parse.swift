@@ -134,7 +134,7 @@ extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
     }
 
     @inlinable
-    static func _skipOWS(_ input: inout Input) {
+    package static func _skipOWS(_ input: inout Input) {
         while input.startIndex < input.endIndex {
             let byte = input[input.startIndex]
             guard byte == 0x20 || byte == 0x09 else { break }
