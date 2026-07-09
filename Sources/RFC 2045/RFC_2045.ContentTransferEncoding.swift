@@ -149,7 +149,7 @@ extension RFC_2045.ContentTransferEncoding: ASCII.Parseable {
         // in the ASCII.Code domain — token comparison against ASCII.Code
         // letter constants stays exact-match.
         let codes: [ASCII.Code]
-        do {
+        do throws(ASCII.Code.Error) {
             codes = try [ASCII.Code](bytes)
         } catch {
             throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))

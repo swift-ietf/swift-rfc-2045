@@ -206,7 +206,7 @@ extension RFC_2045.ContentType: ASCII.Parseable {
         // against ASCII.Code constants directly (Content-Type grammar is strict ASCII;
         // non-ASCII bytes are fail-state via downstream validation).
         let codes: [ASCII.Code]
-        do {
+        do throws(ASCII.Code.Error) {
             codes = try [ASCII.Code](bytes)
         } catch {
             throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))

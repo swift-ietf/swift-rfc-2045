@@ -60,7 +60,7 @@ extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
     public func parse(_ input: inout Input) throws(Failure) -> Output {
         // Parse type token
         let type: Input
-        do {
+        do throws(RFC_2045.Parse.Token<Input>.Error) {
             type = try RFC_2045.Parse.Token<Input>().parse(&input)
         } catch {
             throw .expectedToken
@@ -76,7 +76,7 @@ extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
 
         // Parse subtype token
         let subtype: Input
-        do {
+        do throws(RFC_2045.Parse.Token<Input>.Error) {
             subtype = try RFC_2045.Parse.Token<Input>().parse(&input)
         } catch {
             throw .expectedToken

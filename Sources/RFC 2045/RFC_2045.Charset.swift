@@ -169,7 +169,7 @@ extension RFC_2045.Charset: ASCII.Parseable {
         // Lift to ASCII.Code at the entry boundary so the body works against
         // ASCII.Code constants directly (charset identifiers are strict ASCII).
         let codes: [ASCII.Code]
-        do {
+        do throws(ASCII.Code.Error) {
             codes = try [ASCII.Code](bytes)
         } catch {
             throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))
