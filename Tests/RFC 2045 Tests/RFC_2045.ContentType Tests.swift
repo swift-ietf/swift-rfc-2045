@@ -325,3 +325,61 @@ struct `ContentType - Equality Tests` {
         #expect(ct1 != ct2)
     }
 }
+
+// MARK: - Parameter Quoting (emit side)
+
+@Suite
+struct `ContentType - Parameter Quoting Emission` {
+    @Test
+    func `equals-bearing boundary is quoted and round-trips through the parser`() throws {
+        let ct = RFC_2045.ContentType(
+            __unchecked: (),
+            type: "multipart",
+            subtype: "form-data",
+            parameters: [.boundary: "----=_Part_ABC-123"]
+        )
+        #expect(ct.headerValue == #"multipart/form-data; boundary="----=_Part_ABC-123""#)
+
+        // The parse side already strips quotes — the emitted header must
+        // round-trip to the identical parameter value.
+        let reparsed = try RFC_2045.ContentType(ct.headerValue)
+        #expect(reparsed.boundary == "----=_Part_ABC-123")
+        #expect(reparsed.type == "multipart")
+        #expect(reparsed.subtype == "form-data")
+    }
+
+    @Test
+    func `token-safe value emits bare - byte-identical to the historical form`() {
+        let ct = RFC_2045.ContentType(
+            __unchecked: (),
+            type: "text",
+            subtype: "html",
+            parameters: [.charset: "UTF-8"]
+        )
+        #expect(ct.headerValue == "text/html; charset=UTF-8")
+    }
+
+    @Test
+    func `quote and backslash are backslash-escaped inside quoted-string`() {
+        let ct = RFC_2045.ContentType(
+            __unchecked: (),
+            type: "application",
+            subtype: "octet-stream",
+            parameters: [RFC_2045.Parameter.Name(rawValue: "name"): #"a"b\c d"#]
+        )
+        #expect(
+            ct.headerValue == #"application/octet-stream; name="a\"b\\c d""#
+        )
+    }
+
+    @Test
+    func `empty value is emitted as empty quoted-string`() {
+        let ct = RFC_2045.ContentType(
+            __unchecked: (),
+            type: "text",
+            subtype: "plain",
+            parameters: [RFC_2045.Parameter.Name(rawValue: "x"): ""]
+        )
+        #expect(ct.headerValue == #"text/plain; x="""#)
+    }
+}

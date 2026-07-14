@@ -123,15 +123,47 @@ extension RFC_2045.ContentType: ASCII.Serializable, Binary.Serializable {
         buffer.append(Code.solidus)
         buffer.append(contentsOf: value.subtype.utf8.map { Code(unchecked: Byte($0)) })
 
-        // parameters: ; name=value
+        // parameters: ; name=value — a non-token value MUST be emitted as a
+        // quoted-string (RFC 2045 §5.1); token-safe values emit bare,
+        // byte-identical to the historical form.
         for (name, parameterValue) in value.parameters {
             buffer.append(Code.semicolon)
             buffer.append(Code.space)
             // Compose the re-cut Parameter.Name ASCII verb (no rawValue detour).
             RFC_2045.Parameter.Name.serialize(name, into: &buffer)
             buffer.append(Code.equalsSign)
-            buffer.append(contentsOf: parameterValue.utf8.map { Code(unchecked: Byte($0)) })
+            if Self.parameterValueRequiresQuoting(parameterValue) {
+                buffer.append(
+                    contentsOf: Self.quotedStringBytes(parameterValue).map {
+                        Code(unchecked: Byte($0))
+                    }
+                )
+            } else {
+                buffer.append(contentsOf: parameterValue.utf8.map { Code(unchecked: Byte($0)) })
+            }
         }
+    }
+
+    /// RFC 2045 §5.1: `parameter := attribute "=" value` where
+    /// `value := token / quoted-string`. A value that is not a valid token
+    /// (empty, or containing tspecials / SPACE / CTLs) must go out as a
+    /// quoted-string. The parse side already strips the quotes back off.
+    private static func parameterValueRequiresQuoting(_ value: String) -> Bool {
+        value.isEmpty || !value.utf8.allSatisfy(RFC_2045.Parse._isTokenChar)
+    }
+
+    /// The RFC 2045 quoted-string encoding of `value` as raw UTF-8 bytes,
+    /// backslash-escaping '"' and '\'.
+    private static func quotedStringBytes(_ value: String) -> [UInt8] {
+        var out: [UInt8] = [0x22]  // '"'
+        for byte in value.utf8 {
+            if byte == 0x22 || byte == 0x5C {  // '"' or '\'
+                out.append(0x5C)
+            }
+            out.append(byte)
+        }
+        out.append(0x22)  // '"'
+        return out
     }
 
     /// Explicit `Binary.Serializable` witness disambiguating the two
@@ -153,14 +185,19 @@ extension RFC_2045.ContentType: ASCII.Serializable, Binary.Serializable {
         buffer.append(Code.solidus)
         buffer.append(contentsOf: contentType.subtype.utf8)
 
-        // parameters: ; name=value
+        // parameters: ; name=value — quoted-string for non-token values
+        // (RFC 2045 §5.1), byte-identical bare emission for token values.
         for (name, value) in contentType.parameters {
             buffer.append(Code.semicolon)
             buffer.append(Code.space)
             // Compose the re-cut Parameter.Name Binary verb (no rawValue detour).
             RFC_2045.Parameter.Name.serialize(name, into: &buffer)
             buffer.append(Code.equalsSign)
-            buffer.append(contentsOf: value.utf8)
+            if parameterValueRequiresQuoting(value) {
+                buffer.append(contentsOf: quotedStringBytes(value))
+            } else {
+                buffer.append(contentsOf: value.utf8)
+            }
         }
     }
 }
@@ -378,14 +415,20 @@ extension [Byte] {
             self.append(contentsOf: key.storage.value.lowercased().utf8)
             self.append(Code.equalsSign)  // "="
 
-            // Quote value if it contains special characters per RFC 2045 Section 5.1
-            let needsQuoting = value.contains(where: {
-                $0.ascii.isWhitespace || "()<>@,;:\\\"/[]?=".contains($0)
-            })
+            // Quote value if it is not a valid token per RFC 2045 Section 5.1
+            // (same predicate as the Binary/ASCII serialize witnesses), with
+            // quoted-string escaping of '"' and '\'.
+            let needsQuoting =
+                value.isEmpty || !value.utf8.allSatisfy(RFC_2045.Parse._isTokenChar)
 
             if needsQuoting {
                 self.append(Code.quotationMark)  // "\""
-                self.append(contentsOf: value.utf8)
+                for byte in value.utf8 {
+                    if byte == 0x22 || byte == 0x5C {  // '"' or '\'
+                        self.append(Code.reverseSolidus)
+                    }
+                    self.append(Code(unchecked: Byte(byte)))
+                }
                 self.append(Code.quotationMark)  // "\""
             } else {
                 self.append(contentsOf: value.utf8)

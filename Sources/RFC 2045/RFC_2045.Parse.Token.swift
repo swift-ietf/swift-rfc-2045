@@ -55,6 +55,19 @@ extension RFC_2045.Parse.Token: Parser.`Protocol` {
     /// Visible ASCII (0x21–0x7E) excluding tspecials.
     @inlinable
     package static func _isTokenChar(_ byte: UInt8) -> Bool {
+        RFC_2045.Parse._isTokenChar(byte)
+    }
+}
+
+extension RFC_2045.Parse {
+    /// Visible ASCII (0x21–0x7E) excluding tspecials — RFC 2045 §5.1 token chars.
+    ///
+    /// Generic-independent hoist of `Token._isTokenChar` (the predicate never
+    /// touches `Token`'s `Input`), so non-parsing callers — e.g. the
+    /// `ContentType` serializers' quoted-string predicate — can use it without
+    /// binding a slice type.
+    @inlinable
+    package static func _isTokenChar(_ byte: UInt8) -> Bool {
         guard byte >= 0x21 && byte <= 0x7E else { return false }
         return switch byte {
         case 0x28, 0x29: false  // ( )
