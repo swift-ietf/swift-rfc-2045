@@ -302,12 +302,29 @@ extension RFC_2045.ContentType: ASCII.Parseable {
                     return
                 }
 
-                // Handle quoted values - remove surrounding quotes if present
+                // Handle quoted values (RFC 2045 §5.1 quoted-string): remove
+                // the surrounding quotes and unescape quoted-pairs
+                // (`\X` -> `X`) when materializing the parameter value.
                 let isQuoted =
-                    valueCodes.first == Code.quotationMark
+                    valueCodes.count >= 2
+                    && valueCodes.first == Code.quotationMark
                     && valueCodes.last == Code.quotationMark
                 if isQuoted {
                     valueCodes = Array(valueCodes.dropFirst().dropLast())
+                    var unescaped: [ASCII.Code] = []
+                    unescaped.reserveCapacity(valueCodes.count)
+                    var escaped = false
+                    for code in valueCodes {
+                        if escaped {
+                            unescaped.append(code)
+                            escaped = false
+                        } else if code == Code.reverseSolidus {
+                            escaped = true
+                        } else {
+                            unescaped.append(code)
+                        }
+                    }
+                    valueCodes = unescaped
                 }
 
                 let key = RFC_2045.Parameter.Name(
@@ -318,8 +335,24 @@ extension RFC_2045.ContentType: ASCII.Parseable {
                 params[key] = value
             }
 
+            // Quote-aware split on ';' — a semicolon inside a quoted-string
+            // (or preceded by a quoted-pair backslash) does not terminate the
+            // parameter (RFC 2045 §5.1).
+            var inQuotedString = false
+            var inQuotedPair = false
             for idx in 0..<pCodes.count {
-                if pCodes[idx] == Code.semicolon {
+                let code = pCodes[idx]
+                if inQuotedPair {
+                    inQuotedPair = false
+                } else if inQuotedString {
+                    if code == Code.reverseSolidus {
+                        inQuotedPair = true
+                    } else if code == Code.quotationMark {
+                        inQuotedString = false
+                    }
+                } else if code == Code.quotationMark {
+                    inQuotedString = true
+                } else if code == Code.semicolon {
                     processParam(segStart, idx)
                     segStart = idx &+ 1
                 }

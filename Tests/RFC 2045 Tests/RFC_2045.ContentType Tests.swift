@@ -383,3 +383,41 @@ struct `ContentType - Parameter Quoting Emission` {
         #expect(ct.headerValue == #"text/plain; x="""#)
     }
 }
+
+// MARK: - Fable-448 regression suites ([INST-TEST-013] source-type extension)
+
+extension RFC_2045.ContentType {
+    /// F-001 — `init(ascii:)` must not split quoted parameter values on ';'
+    /// and must unescape quoted-pairs, restoring parse(serialize(v)) == v.
+    @Suite
+    struct `Edge Case` {
+        @Test
+        func `quoted parameter value containing semicolon is not split`() throws {
+            let ct = try RFC_2045.ContentType(#"multipart/mixed; boundary="a;b"; charset=UTF-8"#)
+            #expect(ct.boundary == "a;b")
+            #expect(ct.charset?.rawValue == "UTF-8")
+        }
+
+        @Test
+        func `quoted-pairs are unescaped when materializing parameter values`() throws {
+            let ct = try RFC_2045.ContentType(#"text/plain; name="a\"b\\c""#)
+            #expect(ct.parameters[RFC_2045.Parameter.Name(rawValue: "name")] == #"a"b\c"#)
+        }
+
+        @Test
+        func `round-trip of semicolon quote and backslash payloads`() throws {
+            let payloads = [#"a;b"#, #"a"b"#, #"a\b"#, #"a;b"c\d e"#]
+            for payload in payloads {
+                let original = RFC_2045.ContentType(
+                    __unchecked: (),
+                    type: "text",
+                    subtype: "plain",
+                    parameters: [RFC_2045.Parameter.Name(rawValue: "name"): payload]
+                )
+                let reparsed = try RFC_2045.ContentType(ascii: [Byte](original))
+                #expect(reparsed == original)
+            }
+        }
+    }
+
+}
