@@ -420,4 +420,36 @@ extension RFC_2045.ContentType {
         }
     }
 
+
+    /// F-003 — multi-parameter serialization must be deterministic (canonical
+    /// parameter order sorted by `Parameter.Name`) and byte-identical across
+    /// `headerValue`, `.serialized`, the ASCII witness, and `[Byte](_:)`.
+    @Suite
+    struct Unit {
+        @Test
+        func `multi-parameter serialization is canonical and identical across surfaces`() {
+            let ct = RFC_2045.ContentType(
+                __unchecked: (),
+                type: "multipart",
+                subtype: "mixed",
+                parameters: [
+                    RFC_2045.Parameter.Name(rawValue: "boundary"): "xyz",
+                    RFC_2045.Parameter.Name(rawValue: "charset"): "UTF-8",
+                    RFC_2045.Parameter.Name(rawValue: "name"): "f.txt",
+                    RFC_2045.Parameter.Name(rawValue: "type"): "text/plain",
+                ]
+            )
+            let canonical =
+                #"multipart/mixed; boundary=xyz; charset=UTF-8; name=f.txt; type="text/plain""#
+            let canonicalBytes = [Byte](canonical.utf8)
+
+            #expect([Byte](ct) == canonicalBytes)
+            #expect(ct.serialized == canonicalBytes)
+            #expect(ct.headerValue == canonical)
+
+            var asciiBuffer: [ASCII.Code] = []
+            RFC_2045.ContentType.serialize(ct, into: &asciiBuffer)
+            #expect(asciiBuffer.map(\.byte) == canonicalBytes)
+        }
+    }
 }

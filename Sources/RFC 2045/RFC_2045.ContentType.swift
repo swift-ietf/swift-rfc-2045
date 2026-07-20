@@ -118,30 +118,46 @@ extension RFC_2045.ContentType: ASCII.Serializable, Binary.Serializable {
         _ value: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == ASCII.Code {
-        // type/subtype — ContentType's own fields, leaf-emitted.
-        buffer.append(contentsOf: value.type.utf8.map { Code(unchecked: Byte($0)) })
-        buffer.append(Code.solidus)
-        buffer.append(contentsOf: value.subtype.utf8.map { Code(unchecked: Byte($0)) })
+        // Delegate to the single canonical body; the output is strict ASCII by
+        // construction (RFC 2045 grammar), so the unchecked lift is sound.
+        buffer.append(
+            contentsOf: canonicalSerialization(value).map { Code(unchecked: $0) }
+        )
+    }
 
-        // parameters: ; name=value — a non-token value MUST be emitted as a
-        // quoted-string (RFC 2045 §5.1); token-safe values emit bare,
-        // byte-identical to the historical form.
-        for (name, parameterValue) in value.parameters {
+    /// Single canonical serialization body — RFC 2045 Content-Type header
+    /// value with a **defined, deterministic parameter order** (sorted by
+    /// `Parameter.Name`). Every public serialization surface (`headerValue`,
+    /// `.serialized`, the ASCII and Binary witnesses, and `[Byte](_:)`)
+    /// delegates here, so all emit identical bytes.
+    internal static func canonicalSerialization(_ value: Self) -> [Byte] {
+        var buffer: [Byte] = []
+        let estimatedCapacity =
+            value.type.count + 1 + value.subtype.count
+            + (value.parameters.count * 30)  // ~30 bytes per parameter
+        buffer.reserveCapacity(estimatedCapacity)
+
+        // type/subtype — ContentType's own fields, leaf-emitted.
+        buffer.append(contentsOf: value.type.utf8)
+        buffer.append(Code.solidus)
+        buffer.append(contentsOf: value.subtype.utf8)
+
+        // parameters: ; name=value in canonical (sorted-by-name) order — a
+        // non-token value MUST be emitted as a quoted-string (RFC 2045 §5.1);
+        // token-safe values emit bare, byte-identical to the historical form.
+        for (name, parameterValue) in value.parameters.sorted(by: { $0.key < $1.key }) {
             buffer.append(Code.semicolon)
             buffer.append(Code.space)
-            // Compose the re-cut Parameter.Name ASCII verb (no rawValue detour).
+            // Compose the re-cut Parameter.Name Binary verb (no rawValue detour).
             RFC_2045.Parameter.Name.serialize(name, into: &buffer)
             buffer.append(Code.equalsSign)
-            if Self.parameterValueRequiresQuoting(parameterValue) {
-                buffer.append(
-                    contentsOf: Self.quotedStringBytes(parameterValue).map {
-                        Code(unchecked: Byte($0))
-                    }
-                )
+            if parameterValueRequiresQuoting(parameterValue) {
+                buffer.append(contentsOf: quotedStringBytes(parameterValue))
             } else {
-                buffer.append(contentsOf: parameterValue.utf8.map { Code(unchecked: Byte($0)) })
+                buffer.append(contentsOf: parameterValue.utf8)
             }
         }
+        return buffer
     }
 
     /// RFC 2045 §5.1: `parameter := attribute "=" value` where
@@ -175,30 +191,13 @@ extension RFC_2045.ContentType: ASCII.Serializable, Binary.Serializable {
         serializeBytes(value, into: &buffer)
     }
 
-    /// Byte-domain serialization body (RFC 2045 Content-Type header value).
+    /// Byte-domain serialization body (RFC 2045 Content-Type header value) —
+    /// delegates to the single canonical body.
     private static func serializeBytes<Buffer: RangeReplaceableCollection>(
         _ contentType: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
-        // type/subtype — ContentType's own fields, leaf-emitted.
-        buffer.append(contentsOf: contentType.type.utf8)
-        buffer.append(Code.solidus)
-        buffer.append(contentsOf: contentType.subtype.utf8)
-
-        // parameters: ; name=value — quoted-string for non-token values
-        // (RFC 2045 §5.1), byte-identical bare emission for token values.
-        for (name, value) in contentType.parameters {
-            buffer.append(Code.semicolon)
-            buffer.append(Code.space)
-            // Compose the re-cut Parameter.Name Binary verb (no rawValue detour).
-            RFC_2045.Parameter.Name.serialize(name, into: &buffer)
-            buffer.append(Code.equalsSign)
-            if parameterValueRequiresQuoting(value) {
-                buffer.append(contentsOf: quotedStringBytes(value))
-            } else {
-                buffer.append(contentsOf: value.utf8)
-            }
-        }
+        buffer.append(contentsOf: canonicalSerialization(contentType))
     }
 }
 
@@ -428,45 +427,10 @@ extension [Byte] {
     ///
     /// - Parameter contentType: The content type to serialize
     public init(_ contentType: RFC_2045.ContentType) {
-        self = []
-
-        // Estimate capacity: type + "/" + subtype + parameters
-        let estimatedCapacity =
-            contentType.type.count + 1 + contentType.subtype.count
-            + (contentType.parameters.count * 30)  // ~30 bytes per parameter
-        self.reserveCapacity(estimatedCapacity)
-
-        // Append type/subtype
-        self.append(contentsOf: contentType.type.utf8)
-        self.append(Code.solidus)  // "/"
-        self.append(contentsOf: contentType.subtype.utf8)
-
-        // Append parameters in sorted order for consistency
-        for (key, value) in contentType.parameters.sorted(by: { $0.key < $1.key }) {
-            self.append(Code.semicolon)  // ";"
-            self.append(Code.space)
-            self.append(contentsOf: key.storage.value.lowercased().utf8)
-            self.append(Code.equalsSign)  // "="
-
-            // Quote value if it is not a valid token per RFC 2045 Section 5.1
-            // (same predicate as the Binary/ASCII serialize witnesses), with
-            // quoted-string escaping of '"' and '\'.
-            let needsQuoting =
-                value.isEmpty || !value.utf8.allSatisfy(RFC_2045.Parse._isTokenChar)
-
-            if needsQuoting {
-                self.append(Code.quotationMark)  // "\""
-                for byte in value.utf8 {
-                    if byte == 0x22 || byte == 0x5C {  // '"' or '\'
-                        self.append(Code.reverseSolidus)
-                    }
-                    self.append(Code(unchecked: Byte(byte)))
-                }
-                self.append(Code.quotationMark)  // "\""
-            } else {
-                self.append(contentsOf: value.utf8)
-            }
-        }
+        // Delegate to the single canonical serialization body (sorted
+        // parameter order, quoted-string for non-token values) so this
+        // surface is byte-identical to the Serializable witnesses.
+        self = RFC_2045.ContentType.canonicalSerialization(contentType)
     }
 }
 
