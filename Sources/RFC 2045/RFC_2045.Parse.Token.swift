@@ -23,14 +23,13 @@ extension RFC_2045.Parse {
 }
 
 extension RFC_2045.Parse.Token {
-    public enum Error: Swift.Error, Sendable, Equatable {
-        case expectedToken
-    }
+    /// Errors that can occur when parsing a MIME token.
+    public typealias Error = __MIMETokenParserError
 }
 
 extension RFC_2045.Parse.Token: Parser.`Protocol` {
     public typealias Output = Input
-    public typealias Failure = RFC_2045.Parse.Token<Input>.Error
+    public typealias Failure = __MIMETokenParserError
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Input {

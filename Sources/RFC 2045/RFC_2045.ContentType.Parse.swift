@@ -47,20 +47,18 @@ extension RFC_2045.ContentType.Parse {
         }
     }
 
-    public enum Error: Swift.Error, Sendable, Equatable {
-        case expectedToken
-        case expectedSolidus
-    }
+    /// Errors that can occur when parsing a MIME content-type.
+    public typealias Error = __MIMEContentTypeParserError
 }
 
 extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
-    public typealias Failure = RFC_2045.ContentType.Parse<Input>.Error
+    public typealias Failure = __MIMEContentTypeParserError
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Output {
         // Parse type token
         let type: Input
-        do throws(RFC_2045.Parse.Token<Input>.Error) {
+        do throws(__MIMETokenParserError) {
             type = try RFC_2045.Parse.Token<Input>().parse(&input)
         } catch {
             throw .expectedToken
@@ -76,7 +74,7 @@ extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
 
         // Parse subtype token
         let subtype: Input
-        do throws(RFC_2045.Parse.Token<Input>.Error) {
+        do throws(__MIMETokenParserError) {
             subtype = try RFC_2045.Parse.Token<Input>().parse(&input)
         } catch {
             throw .expectedToken

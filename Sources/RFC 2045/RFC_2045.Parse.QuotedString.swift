@@ -22,15 +22,13 @@ extension RFC_2045.Parse {
 }
 
 extension RFC_2045.Parse.QuotedString {
-    public enum Error: Swift.Error, Sendable, Equatable {
-        case expectedQuote
-        case unterminatedString
-    }
+    /// Errors that can occur when parsing a MIME quoted-string.
+    public typealias Error = __MIMEQuotedStringParserError
 }
 
 extension RFC_2045.Parse.QuotedString: Parser.`Protocol` {
     public typealias Output = Input
-    public typealias Failure = RFC_2045.Parse.QuotedString<Input>.Error
+    public typealias Failure = __MIMEQuotedStringParserError
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Input {
