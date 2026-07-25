@@ -1,7 +1,7 @@
 # Swift RFC 2045
 
-[![CI](https://github.com/swift-ietf/swift-rfc-2045/workflows/CI/badge.svg)](https://github.com/swift-ietf/swift-rfc-2045/actions/workflows/ci.yml)
 ![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
+[![CI](https://github.com/swift-ietf/swift-rfc-2045/workflows/CI/badge.svg)](https://github.com/swift-ietf/swift-rfc-2045/actions/workflows/ci.yml)
 
 Swift implementation of RFC 2045: Multipurpose Internet Mail Extensions (MIME) Part One
 
