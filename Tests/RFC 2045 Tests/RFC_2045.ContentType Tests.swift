@@ -420,7 +420,6 @@ extension RFC_2045.ContentType {
         }
     }
 
-
     /// F-003 — multi-parameter serialization must be deterministic (canonical
     /// parameter order sorted by `Parameter.Name`) and byte-identical across
     /// `headerValue`, `.serialized`, the ASCII witness, and `[Byte](_:)`.

@@ -282,7 +282,7 @@ extension RFC_2045.ContentType: ASCII.Parseable {
         // Parse parameters if present
         var params: [RFC_2045.Parameter.Name: String] = [:]
 
-        if let parametersCodes = parametersCodes {
+        if let parametersCodes {
             let pCodes = Array(parametersCodes)
             var segStart = 0
 
@@ -442,7 +442,13 @@ extension RFC_2045.ContentType: Swift.RawRepresentable {
         String(decoding: serialized, as: UTF8.self)
     }
 
-    public init?(rawValue: String) { try? self.init(rawValue) }
+    public init?(rawValue: String) {
+        do throws(Error) {
+            try self.init(rawValue)
+        } catch {
+            return nil
+        }
+    }
 }
 
 extension RFC_2045.ContentType: CustomStringConvertible {
@@ -548,7 +554,7 @@ extension RFC_2045.ContentType {
     /// Creates application/octet-stream with optional name parameter
     public static func applicationOctetStream(name: String? = nil) -> RFC_2045.ContentType {
         var params: [RFC_2045.Parameter.Name: String] = [:]
-        if let name = name {
+        if let name {
             params[.init(rawValue: "name")] = name
         }
         return RFC_2045.ContentType(
@@ -569,7 +575,7 @@ extension RFC_2045.ContentType {
     /// Creates application/pdf with optional name parameter
     public static func applicationPDF(name: String? = nil) -> RFC_2045.ContentType {
         var params: [RFC_2045.Parameter.Name: String] = [:]
-        if let name = name {
+        if let name {
             params[.init(rawValue: "name")] = name
         }
         return RFC_2045.ContentType(
@@ -592,7 +598,7 @@ extension RFC_2045.ContentType {
     /// Creates image/jpeg with optional name parameter
     public static func imageJPEG(name: String? = nil) -> RFC_2045.ContentType {
         var params: [RFC_2045.Parameter.Name: String] = [:]
-        if let name = name {
+        if let name {
             params[.init(rawValue: "name")] = name
         }
         return RFC_2045.ContentType(
@@ -613,7 +619,7 @@ extension RFC_2045.ContentType {
     /// Creates image/png with optional name parameter
     public static func imagePNG(name: String? = nil) -> RFC_2045.ContentType {
         var params: [RFC_2045.Parameter.Name: String] = [:]
-        if let name = name {
+        if let name {
             params[.init(rawValue: "name")] = name
         }
         return RFC_2045.ContentType(
@@ -634,7 +640,7 @@ extension RFC_2045.ContentType {
     /// Creates image/gif with optional name parameter
     public static func imageGIF(name: String? = nil) -> RFC_2045.ContentType {
         var params: [RFC_2045.Parameter.Name: String] = [:]
-        if let name = name {
+        if let name {
             params[.init(rawValue: "name")] = name
         }
         return RFC_2045.ContentType(

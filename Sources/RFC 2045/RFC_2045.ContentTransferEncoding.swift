@@ -73,6 +73,7 @@ extension RFC_2045.ContentTransferEncoding {
         switch self {
         case .base64, .quotedPrintable:
             return true
+
         case .sevenBit, .eightBit, .binary:
             return false
         }
@@ -85,6 +86,7 @@ extension RFC_2045.ContentTransferEncoding {
         switch self {
         case .base64, .quotedPrintable:
             return true
+
         case .sevenBit, .eightBit, .binary:
             return false
         }
@@ -181,14 +183,19 @@ extension RFC_2045.ContentTransferEncoding: ASCII.Parseable {
         switch normalized.count {
         case 4 where normalized == .`7bit`:
             self = .sevenBit
+
         case 4 where normalized == .`8bit`:
             self = .eightBit
+
         case 6 where normalized == .base64:
             self = .base64
+
         case 6 where normalized == .binary:
             self = .binary
+
         case 16 where normalized == .quotedPrintable:
             self = .quotedPrintable
+
         default:
             throw Error.unrecognizedEncoding(String(decoding: bytes, as: UTF8.self))
         }

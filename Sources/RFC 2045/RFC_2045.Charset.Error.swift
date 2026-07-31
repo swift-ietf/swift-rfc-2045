@@ -43,9 +43,11 @@ extension RFC_2045.Charset.Error: CustomStringConvertible {
         switch self {
         case .empty:
             return "Charset identifier cannot be empty"
+
         case .invalidCharacter(let value, let byte, let reason):
             return
                 "Invalid byte 0x\(String(byte, radix: 16).uppercased()) in '\(value)': \(reason)"
+
         case .nonASCII(let value):
             return "Non-ASCII byte in '\(value)'"
         }

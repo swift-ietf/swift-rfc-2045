@@ -98,6 +98,7 @@ struct `README Verification` {
             switch error {
             case .missingSeparator:
                 break  // Expected
+
             default:
                 Issue.record("Expected missingSeparator error")
             }
@@ -115,6 +116,7 @@ struct `README Verification` {
             switch error {
             case .unrecognizedEncoding:
                 break  // Expected
+
             default:
                 Issue.record("Expected unrecognizedEncoding error")
             }

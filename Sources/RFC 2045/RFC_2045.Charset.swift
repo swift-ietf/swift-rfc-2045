@@ -94,7 +94,7 @@ extension RFC_2045.Charset: Hashable {
 
 /// Equality comparison with optional charset and raw value (case-insensitive)
 public func == (lhs: RFC_2045.Charset?, rhs: String) -> Bool {
-    guard let lhs = lhs else { return false }
+    guard let lhs else { return false }
     return lhs.rawValue.uppercased() == rhs.uppercased()
 }
 
