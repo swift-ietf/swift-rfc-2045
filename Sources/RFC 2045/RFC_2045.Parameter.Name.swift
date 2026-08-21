@@ -8,7 +8,7 @@
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
 public import Format_Primitives
-public import INCITS_4_1986
+import INCITS_4_1986
 public import Parseable_ASCII_Primitives
 
 extension RFC_2045.Parameter {

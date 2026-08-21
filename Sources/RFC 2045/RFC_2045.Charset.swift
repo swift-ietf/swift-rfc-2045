@@ -7,7 +7,7 @@
 
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
-public import INCITS_4_1986
+import INCITS_4_1986
 public import Parseable_ASCII_Primitives
 
 // `Code` aliases ASCII.Code at file scope — avoids the INCITS `[ASCII.Code].ASCII`
