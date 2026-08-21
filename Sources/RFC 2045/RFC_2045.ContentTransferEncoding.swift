@@ -1,74 +1,26 @@
-//
-//  RFC_2045.ContentTransferEncoding.swift
-//  swift-rfc-2045
-//
-//  Created by Coen ten Thije Boonkkamp on 19/11/2025.
-//
-
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
 import INCITS_4_1986
 public import Parseable_ASCII_Primitives
 
 extension RFC_2045 {
-    /// MIME Content-Transfer-Encoding header
-    ///
-    /// Specifies the encoding transformation that was applied to the body
-    /// to make it suitable for transport over the internet.
-    ///
-    /// ## Example
-    ///
-    /// ```swift
-    /// let encoding = RFC_2045.ContentTransferEncoding.base64
-    /// print(encoding.headerValue) // "base64"
-    ///
-    /// // Parse from string
-    /// let parsed = try RFC_2045.ContentTransferEncoding("quoted-printable")
-    /// ```
-    ///
-    /// ## RFC Reference
-    ///
-    /// From RFC 2045 Section 6:
-    ///
-    /// > The Content-Transfer-Encoding field's value is a single token
-    /// > specifying the type of encoding, as enumerated below.
+
     public enum ContentTransferEncoding: String, Hashable, Sendable, Codable {
-        /// 7-bit ASCII (default)
-        ///
-        /// No encoding. Data must be 7-bit ASCII with lines no longer than 998 characters.
+
         case sevenBit = "7bit"
 
-        /// 8-bit data
-        ///
-        /// No encoding. Data may contain 8-bit bytes but lines must be no longer
-        /// than 998 characters.
         case eightBit = "8bit"
 
-        /// Binary data
-        ///
-        /// No encoding. Data may contain arbitrary binary data with no line
-        /// length restrictions.
         case binary = "binary"
 
-        /// Quoted-printable encoding
-        ///
-        /// Encodes data using printable ASCII characters. Suitable for text
-        /// that is mostly ASCII with occasional non-ASCII characters.
         case quotedPrintable = "quoted-printable"
 
-        /// Base64 encoding
-        ///
-        /// Encodes arbitrary binary data into printable ASCII. Most common
-        /// encoding for attachments and non-text content.
         case base64 = "base64"
     }
 }
 
 extension RFC_2045.ContentTransferEncoding {
-    /// Returns true if this encoding is binary-safe
-    ///
-    /// Binary-safe encodings (base64, quoted-printable) can represent
-    /// arbitrary binary data. Non-binary-safe encodings have restrictions.
+
     public var isBinarySafe: Bool {
         switch self {
         case .base64, .quotedPrintable:
@@ -79,9 +31,6 @@ extension RFC_2045.ContentTransferEncoding {
         }
     }
 
-    /// Returns true if this encoding requires special handling
-    ///
-    /// Encoded content (base64, quoted-printable) must be decoded before use.
     public var isEncoded: Bool {
         switch self {
         case .base64, .quotedPrintable:
@@ -101,15 +50,8 @@ extension [Byte] {
     }
 }
 
-// MARK: - Serializable
-
 extension RFC_2045.ContentTransferEncoding: ASCII.Serializable, Binary.Serializable {
-    /// Serializes `value` as ASCII bytes into `buffer`.
-    ///
-    /// Explicit witness disambiguating the two constraint-incomparable
-    /// `serialize(_:into:)` defaults. The bytes derive from the free
-    /// `String`-RawRepresentable serializer (`.serialized`), using the enum's
-    /// native `rawValue`.
+
     public static func serialize<Buffer: RangeReplaceableCollection>(
         _ value: Self,
         into buffer: inout Buffer
@@ -117,12 +59,6 @@ extension RFC_2045.ContentTransferEncoding: ASCII.Serializable, Binary.Serializa
         buffer.append(contentsOf: value.serialized)
     }
 
-    /// Serializes `value` as ASCII codes into `buffer`.
-    ///
-    /// Own `ASCII.Serializable` verb (Phase D): the conformer carries its own
-    /// ASCII-code serialization rather than routing through the transitional
-    /// canonical-`[ASCII.Code]` default. The codes derive from the enum's
-    /// native `rawValue`.
     public static func serialize<Buffer: RangeReplaceableCollection>(
         _ value: Self,
         into buffer: inout Buffer
@@ -132,24 +68,14 @@ extension RFC_2045.ContentTransferEncoding: ASCII.Serializable, Binary.Serializa
 }
 
 extension RFC_2045.ContentTransferEncoding: ASCII.Parseable {
-    /// Creates an encoding by validating `string`'s UTF-8 bytes as ASCII.
-    ///
-    /// Re-provides the string convenience initializer (previously inherited from
-    /// the retired combined ASCII serializable protocol).
+
     public init(_ string: some StringProtocol) throws(Error) {
         try self.init(ascii: [Byte](string.utf8))
     }
 
-    /// Parses a Content-Transfer-Encoding header from canonical byte representation
-    ///
-    /// - Parameter bytes: The ASCII byte representation of the header value
-    /// - Throws: `RFC_2045.ContentTransferEncoding.Error` if the encoding is not recognized
     public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
-        // Type-up: lift to ASCII.Code at the entry boundary so the body works
-        // against ASCII.Code constants directly. Trimming and lowercasing run
-        // in the ASCII.Code domain — token comparison against ASCII.Code
-        // letter constants stays exact-match.
+
         let codes: [ASCII.Code]
         do throws(ASCII.Code.Error) {
             codes = try [ASCII.Code](bytes)
@@ -157,7 +83,6 @@ extension RFC_2045.ContentTransferEncoding: ASCII.Parseable {
             throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))
         }
 
-        // Trim linear whitespace (LWSP per RFC 822): SPACE and HTAB
         var trimStart = codes.startIndex
         var trimEnd = codes.endIndex
         while trimStart < trimEnd,
@@ -176,10 +101,8 @@ extension RFC_2045.ContentTransferEncoding: ASCII.Parseable {
             throw Error.empty
         }
 
-        // Normalize to lowercase in ASCII.Code domain (ASCII letters only)
         let normalized: [ASCII.Code] = trimmed.map { $0.lowercased() }
 
-        // Match code sequences directly (zero String allocation)
         switch normalized.count {
         case 4 where normalized == .`7bit`:
             self = .sevenBit
@@ -202,15 +125,10 @@ extension RFC_2045.ContentTransferEncoding: ASCII.Parseable {
     }
 }
 
-// File-scope alias resolves `ASCII.Code` correctly: INCITS's `[ASCII.Code].ASCII`
-// namespace shadows bare `ASCII` inside the `extension [ASCII.Code]` below, so the
-// constants reference this alias (resolved here, outside the shadowed scope).
 private typealias Code = ASCII.Code
 
 extension [ASCII.Code] {
-    // ASCII.Code token constants for normalized-buffer comparison.
-    // Constants live in the ASCII.Code domain to match the parser body after
-    // the retyping to Buffer.Element == Byte.
+
     static let `7bit`: Self = [Code.`7`, Code.b, Code.i, Code.t]
     static let `8bit`: Self = [Code.`8`, Code.b, Code.i, Code.t]
     static let base64: Self = [
@@ -227,10 +145,8 @@ extension [ASCII.Code] {
     ]
 }
 
-// MARK: - Protocol Conformances
-
 extension RFC_2045.ContentTransferEncoding: CustomStringConvertible {
-    /// The encoding's ASCII serialization decoded as a `String`.
+
     public var description: String {
         String(decoding: serialized, as: UTF8.self)
     }

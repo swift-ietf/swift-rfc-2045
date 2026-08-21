@@ -1,13 +1,6 @@
-// RFC_2045.ContentTransferEncoding Tests.swift
-// swift-rfc-2045
-//
-// Tests for RFC_2045.ContentTransferEncoding MIME Content-Transfer-Encoding header
-
 import Testing
 
 @testable import RFC_2045
-
-// MARK: - Parsing Tests
 
 @Suite
 struct `ContentTransferEncoding - Parsing Tests` {
@@ -109,8 +102,6 @@ struct `ContentTransferEncoding - Parsing Tests` {
     }
 }
 
-// MARK: - Raw Value Tests
-
 @Suite
 struct `ContentTransferEncoding - Raw Value Tests` {
     @Test
@@ -138,8 +129,6 @@ struct `ContentTransferEncoding - Raw Value Tests` {
         #expect(RFC_2045.ContentTransferEncoding.quotedPrintable.rawValue == "quoted-printable")
     }
 }
-
-// MARK: - Properties Tests
 
 @Suite
 struct `ContentTransferEncoding - Properties Tests` {
@@ -216,8 +205,6 @@ struct `ContentTransferEncoding - Properties Tests` {
         }
     }
 }
-
-// MARK: - Serialization Tests
 
 @Suite
 struct `ContentTransferEncoding - Serialization Tests` {

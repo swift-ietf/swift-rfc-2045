@@ -1,20 +1,7 @@
-//
-//  RFC_2045.ContentType.Parse.swift
-//  swift-rfc-2045
-//
-//  MIME Content-Type: type "/" subtype *(";" parameter)
-//
-
 public import Parser_Primitives
 
 extension RFC_2045.ContentType {
-    /// Parses a MIME Content-Type header per RFC 2045 Section 5.1.
-    ///
-    /// `content = type "/" subtype *(";" OWS parameter)`
-    ///
-    /// Where `parameter = token "=" (token / quoted-string)`
-    ///
-    /// Returns the type, subtype, and parameters as raw byte slices.
+
     public struct Parse<Input: Collection.Slice.`Protocol`>: Sendable
     where Input: Sendable, Input.Element == UInt8 {
         @inlinable
@@ -47,7 +34,6 @@ extension RFC_2045.ContentType.Parse {
         }
     }
 
-    /// Errors that can occur when parsing a MIME content-type.
     public typealias Error = __MIMEContentTypeParserError
 }
 
@@ -56,7 +42,7 @@ extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Output {
-        // Parse type token
+
         let type: Input
         do throws(__MIMETokenParserError) {
             type = try RFC_2045.Parse.Token<Input>().parse(&input)
@@ -64,7 +50,6 @@ extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
             throw .expectedToken
         }
 
-        // Expect '/' (0x2F)
         guard input.startIndex < input.endIndex,
             input[input.startIndex] == 0x2F
         else {
@@ -72,7 +57,6 @@ extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
         }
         input = input[input.index(after: input.startIndex)...]
 
-        // Parse subtype token
         let subtype: Input
         do throws(__MIMETokenParserError) {
             subtype = try RFC_2045.Parse.Token<Input>().parse(&input)
@@ -80,14 +64,12 @@ extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
             throw .expectedToken
         }
 
-        // Parse optional parameters: *(";" OWS token "=" (token / quoted-string))
         var parameters: [Parameter] = []
 
         while input.startIndex < input.endIndex {
-            // Skip OWS
+
             Self._skipOWS(&input)
 
-            // Expect ';'
             guard input.startIndex < input.endIndex,
                 input[input.startIndex] == 0x3B
             else {
@@ -95,10 +77,8 @@ extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
             }
             input = input[input.index(after: input.startIndex)...]
 
-            // Skip OWS
             Self._skipOWS(&input)
 
-            // Parse parameter name (token)
             let name: Input
             do throws(__MIMETokenParserError) {
                 name = try RFC_2045.Parse.Token<Input>().parse(&input)
@@ -106,7 +86,6 @@ extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
                 break
             }
 
-            // Expect '='
             guard input.startIndex < input.endIndex,
                 input[input.startIndex] == 0x3D
             else {
@@ -114,7 +93,6 @@ extension RFC_2045.ContentType.Parse: Parser.`Protocol` {
             }
             input = input[input.index(after: input.startIndex)...]
 
-            // Parse value (token or quoted-string)
             let value: Input
             if input.startIndex < input.endIndex && input[input.startIndex] == 0x22 {
                 do throws(__MIMEQuotedStringParserError) {

@@ -1,13 +1,6 @@
-// RFC_2045.Charset Tests.swift
-// swift-rfc-2045
-//
-// Tests for RFC_2045.Charset MIME character set identifier
-
 import Testing
 
 @testable import RFC_2045
-
-// MARK: - Parsing Tests
 
 @Suite
 struct `Charset - Parsing Tests` {
@@ -79,8 +72,6 @@ struct `Charset - Parsing Tests` {
     }
 }
 
-// MARK: - Static Constants Tests
-
 @Suite
 struct `Charset - Static Constants Tests` {
     @Test
@@ -134,8 +125,6 @@ struct `Charset - Static Constants Tests` {
     }
 }
 
-// MARK: - Equality Tests
-
 @Suite
 struct `Charset - Equality Tests` {
     @Test
@@ -184,8 +173,6 @@ struct `Charset - Equality Tests` {
     }
 }
 
-// MARK: - Hashable Tests
-
 @Suite
 struct `Charset - Hashable Tests` {
     @Test
@@ -219,8 +206,6 @@ struct `Charset - Hashable Tests` {
         #expect(dict[.utf8] == "second")
     }
 }
-
-// MARK: - Serialization Tests
 
 @Suite
 struct `Charset - Serialization Tests` {

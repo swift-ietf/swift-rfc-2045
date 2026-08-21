@@ -1,14 +1,7 @@
-// RFC_2045.Parameter.Name Tests.swift
-// swift-rfc-2045
-//
-// Tests for RFC_2045.Parameter.Name MIME parameter name
-
 import Format_Primitives
 import Testing
 
 @testable import RFC_2045
-
-// MARK: - Parsing Tests
 
 @Suite
 struct `Parameter.Name - Parsing Tests` {
@@ -152,8 +145,6 @@ struct `Parameter.Name - Parsing Tests` {
     }
 }
 
-// MARK: - Static Constants Tests
-
 @Suite
 struct `Parameter.Name - Static Constants Tests` {
     @Test
@@ -172,8 +163,6 @@ struct `Parameter.Name - Static Constants Tests` {
         #expect(RFC_2045.Parameter.Name.name.rawValue == "name")
     }
 }
-
-// MARK: - Equality Tests
 
 @Suite
 struct `Parameter.Name - Equality Tests` {
@@ -211,8 +200,6 @@ struct `Parameter.Name - Equality Tests` {
     }
 }
 
-// MARK: - Hashable Tests
-
 @Suite
 struct `Parameter.Name - Hashable Tests` {
     @Test
@@ -247,8 +234,6 @@ struct `Parameter.Name - Hashable Tests` {
     }
 }
 
-// MARK: - Comparable Tests
-
 @Suite
 struct `Parameter.Name - Comparable Tests` {
     @Test
@@ -277,8 +262,6 @@ struct `Parameter.Name - Comparable Tests` {
     }
 }
 
-// MARK: - Serialization Tests
-
 @Suite
 struct `Parameter.Name - Serialization Tests` {
     @Test(arguments: [
@@ -305,8 +288,6 @@ struct `Parameter.Name - Serialization Tests` {
         #expect(bytes == [Byte]("charset".utf8))
     }
 }
-
-// MARK: - CaseInsensitive String Initialization Tests
 
 @Suite
 struct `Parameter.Name - CaseInsensitive Initialization Tests` {

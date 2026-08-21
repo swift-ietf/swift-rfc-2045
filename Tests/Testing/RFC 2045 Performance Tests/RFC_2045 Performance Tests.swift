@@ -1,22 +1,3 @@
-// ===----------------------------------------------------------------------===//
-//
-// This source file is part of the swift-rfc-2045 open source project
-//
-// Copyright (c) 2025 Coen ten Thije Boonkkamp
-// Licensed under Apache License v2.0
-//
-// See LICENSE.txt for license information
-//
-// SPDX-License-Identifier: Apache-2.0
-//
-// ===----------------------------------------------------------------------===//
-
-// RFC 2045 Performance Tests
-//
-// Isolated in a nested SPM package per [TEST-024]/[INST-TEST]: the `.timed`
-// trait lives in swift-testing's `Testing` product, which cannot be added to
-// the main test target without risking a circular dependency.
-
 import Testing
 
 @testable import RFC_2045

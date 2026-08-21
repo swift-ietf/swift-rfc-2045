@@ -1,13 +1,6 @@
-// RFC_2045.ContentType Tests.swift
-// swift-rfc-2045
-//
-// Tests for RFC_2045.ContentType MIME Content-Type header
-
 import Testing
 
 @testable import RFC_2045
-
-// MARK: - Parsing Tests
 
 @Suite
 struct `ContentType - Parsing Tests` {
@@ -116,8 +109,6 @@ struct `ContentType - Parsing Tests` {
     }
 }
 
-// MARK: - Static Constants Tests
-
 @Suite
 struct `ContentType - Static Constants Tests` {
     @Test
@@ -181,8 +172,6 @@ struct `ContentType - Static Constants Tests` {
     }
 }
 
-// MARK: - Factory Methods Tests
-
 @Suite
 struct `ContentType - Factory Methods Tests` {
     @Test
@@ -216,8 +205,6 @@ struct `ContentType - Factory Methods Tests` {
         #expect(ct.parameters[.init(rawValue: "name")] == "image.png")
     }
 }
-
-// MARK: - Computed Properties Tests
 
 @Suite
 struct `ContentType - Computed Properties Tests` {
@@ -258,8 +245,6 @@ struct `ContentType - Computed Properties Tests` {
     }
 }
 
-// MARK: - Serialization Round-Trip Tests
-
 @Suite
 struct `ContentType - Serialization Tests` {
     @Test
@@ -293,8 +278,6 @@ struct `ContentType - Serialization Tests` {
     }
 }
 
-// MARK: - Equality Tests
-
 @Suite
 struct `ContentType - Equality Tests` {
     @Test
@@ -326,8 +309,6 @@ struct `ContentType - Equality Tests` {
     }
 }
 
-// MARK: - Parameter Quoting (emit side)
-
 @Suite
 struct `ContentType - Parameter Quoting Emission` {
     @Test
@@ -340,8 +321,6 @@ struct `ContentType - Parameter Quoting Emission` {
         )
         #expect(ct.headerValue == #"multipart/form-data; boundary="----=_Part_ABC-123""#)
 
-        // The parse side already strips quotes — the emitted header must
-        // round-trip to the identical parameter value.
         let reparsed = try RFC_2045.ContentType(ct.headerValue)
         #expect(reparsed.boundary == "----=_Part_ABC-123")
         #expect(reparsed.type == "multipart")
@@ -384,11 +363,8 @@ struct `ContentType - Parameter Quoting Emission` {
     }
 }
 
-// MARK: - Fable-448 regression suites ([INST-TEST-013] source-type extension)
-
 extension RFC_2045.ContentType {
-    /// F-001 — `init(ascii:)` must not split quoted parameter values on ';'
-    /// and must unescape quoted-pairs, restoring parse(serialize(v)) == v.
+
     @Suite
     struct `Edge Case` {
         @Test
@@ -420,9 +396,6 @@ extension RFC_2045.ContentType {
         }
     }
 
-    /// F-003 — multi-parameter serialization must be deterministic (canonical
-    /// parameter order sorted by `Parameter.Name`) and byte-identical across
-    /// `headerValue`, `.serialized`, the ASCII witness, and `[Byte](_:)`.
     @Suite
     struct Unit {
         @Test
