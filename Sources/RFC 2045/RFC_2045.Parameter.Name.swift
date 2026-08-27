@@ -1,8 +1,8 @@
-public import ASCII_Serializer_Primitives
-public import Binary_Serializable_Primitives
-public import Format_Primitives
+public import ASCII_Serializer
+public import Binary_Serializable
+public import Format
 import INCITS_4_1986
-public import Parseable_ASCII_Primitives
+public import Parseable_ASCII
 
 extension RFC_2045.Parameter {
 

@@ -1,8 +1,8 @@
-public import ASCII_Serializer_Primitives
-public import Binary_Serializable_Primitives
-import Format_Primitives
+public import ASCII_Serializer
+public import Binary_Serializable
+import Format
 import INCITS_4_1986
-public import Parseable_ASCII_Primitives
+public import Parseable_ASCII
 
 private typealias Code = ASCII.Code
 

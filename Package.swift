@@ -19,33 +19,33 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            url: "https://github.com/swift-primitives/swift-ascii-serializer-primitives.git",
+            url: "https://github.com/swift-molecules/swift-ascii-serializer.git",
             branch: "main"
         ),
         .package(url: "https://github.com/swift-incits/swift-incits-4-1986.git", branch: "main"),
         .package(url: "https://github.com/swift-ietf/swift-rfc-5322.git", branch: "main"),
         .package(
-            url: "https://github.com/swift-primitives/swift-standard-library-extensions.git",
+            url: "https://github.com/swift-molecules/swift-standard-library-extensions.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-format-primitives.git",
+            url: "https://github.com/swift-molecules/swift-format.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-binary-primitives.git",
+            url: "https://github.com/swift-molecules/swift-binary.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-binary-serializer-primitives.git",
+            url: "https://github.com/swift-molecules/swift-binary-serializer.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-parser-primitives.git",
+            url: "https://github.com/swift-molecules/swift-parser.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-ascii-parser-primitives.git",
+            url: "https://github.com/swift-molecules/swift-ascii-parser.git",
             branch: "main"
         ),
     ],
@@ -54,8 +54,8 @@ let package = Package(
             name: "RFC 2045",
             dependencies: [
                 .product(
-                    name: "ASCII Serializer Primitives",
-                    package: "swift-ascii-serializer-primitives"
+                    name: "ASCII Serializer",
+                    package: "swift-ascii-serializer"
                 ),
                 .product(name: "INCITS 4 1986", package: "swift-incits-4-1986"),
                 .product(name: "RFC 5322", package: "swift-rfc-5322"),
@@ -63,16 +63,16 @@ let package = Package(
                     name: "Standard Library Extensions",
                     package: "swift-standard-library-extensions"
                 ),
-                .product(name: "Format Primitives", package: "swift-format-primitives"),
-                .product(name: "Binary Primitives", package: "swift-binary-primitives"),
+                .product(name: "Format", package: "swift-format"),
+                .product(name: "Binary", package: "swift-binary"),
                 .product(
-                    name: "Binary Serializable Primitives",
-                    package: "swift-binary-serializer-primitives"
+                    name: "Binary Serializable",
+                    package: "swift-binary-serializer"
                 ),
-                .product(name: "Parser Primitives", package: "swift-parser-primitives"),
+                .product(name: "Parser", package: "swift-parser"),
                 .product(
-                    name: "Parseable ASCII Primitives",
-                    package: "swift-ascii-parser-primitives"
+                    name: "Parseable ASCII",
+                    package: "swift-ascii-parser"
                 ),
             ]
         ),
@@ -80,7 +80,7 @@ let package = Package(
             name: "RFC 2045 Tests",
             dependencies: [
                 "RFC 2045",
-                .product(name: "Format Primitives", package: "swift-format-primitives"),
+                .product(name: "Format", package: "swift-format"),
             ]
         ),
     ],

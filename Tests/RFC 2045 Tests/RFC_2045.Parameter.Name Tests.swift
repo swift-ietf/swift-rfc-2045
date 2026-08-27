@@ -1,4 +1,4 @@
-import Format_Primitives
+import Format
 import Testing
 
 @testable import RFC_2045
