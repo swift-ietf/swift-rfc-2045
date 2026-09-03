@@ -79,18 +79,13 @@ let package = Package(
         .testTarget(
             name: "RFC 2045 Tests",
             dependencies: [
-                "RFC 2045",
+                .target(name: "RFC 2045"),
                 .product(name: "Format", package: "swift-format"),
             ]
         ),
     ],
     swiftLanguageModes: [.v6]
 )
-
-extension String {
-    var tests: Self { self + " Tests" }
-    var foundation: Self { self + " Foundation" }
-}
 
 for target in package.targets where ![.system, .binary, .plugin, .macro].contains(target.type) {
     let ecosystem: [SwiftSetting] = [
