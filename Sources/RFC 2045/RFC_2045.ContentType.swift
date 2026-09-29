@@ -1,14 +1,10 @@
-public import ASCII_Serializer
-public import Binary_Serializable
-import Format
-import INCITS_4_1986
-public import Parseable_ASCII
-
-private typealias Code = ASCII.Code
+import ASCII
+public import Byte
+import Byte
 
 extension RFC_2045 {
 
-    public struct ContentType: Sendable, Codable {
+    public struct ContentType: Sendable {
 
         public let type: String
 
@@ -29,14 +25,6 @@ extension RFC_2045 {
     }
 }
 
-extension [Byte] {
-    public init(
-        _ contentType: RFC_2045.ContentType.Type
-    ) {
-        self = [Byte]("Content-Type".utf8)
-    }
-}
-
 extension RFC_2045.ContentType: Hashable {
 
     public func hash(into hasher: inout Hasher) {
@@ -52,259 +40,233 @@ extension RFC_2045.ContentType: Hashable {
     }
 }
 
-extension RFC_2045.ContentType: ASCII.Serializable, Binary.Serializable {
+extension RFC_2045.ContentType {
 
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == ASCII.Code {
+    public init(
+        type: String,
+        subtype: String,
+        parameters: [RFC_2045.Parameter.Name: String] = [:]
+    ) throws(Error) {
 
-        buffer.append(
-            contentsOf: canonicalSerialization(value).map { Code(unchecked: $0) }
+        guard !type.isEmpty else {
+            throw Error.emptyType(type)
+        }
+
+        guard !subtype.isEmpty else {
+            throw Error.emptySubtype(subtype)
+        }
+
+        try Self.validate(token: type)
+        try Self.validate(token: subtype)
+
+        self.init(
+            __unchecked: (),
+            type: type.lowercased(),
+            subtype: subtype.lowercased(),
+            parameters: parameters
         )
     }
 
-    internal static func canonicalSerialization(_ value: Self) -> [Byte] {
-        var buffer: [Byte] = []
-        let estimatedCapacity =
-            value.type.count + 1 + value.subtype.count
-            + (value.parameters.count * 30)
-        buffer.reserveCapacity(estimatedCapacity)
+    private static func validate(token: String) throws(Error) {
 
-        buffer.append(contentsOf: value.type.utf8)
-        buffer.append(Code.solidus)
-        buffer.append(contentsOf: value.subtype.utf8)
+        let codes: [ASCII.Code]
+        do throws(ASCII.Code.Error) {
+            codes = try RFC_2045.Grammar.codes(token.utf8.lazy.map(Byte.init(bitPattern:)))
+        } catch {
+            throw Error.nonASCII(token)
+        }
 
-        for (name, parameterValue) in value.parameters.sorted(by: { $0.key < $1.key }) {
-            buffer.append(Code.semicolon)
-            buffer.append(Code.space)
+        for code in codes {
 
-            RFC_2045.Parameter.Name.serialize(name, into: &buffer)
-            buffer.append(Code.equalsSign)
-            if parameterValueRequiresQuoting(parameterValue) {
-                buffer.append(contentsOf: quotedStringBytes(parameterValue))
-            } else {
-                buffer.append(contentsOf: parameterValue.utf8)
+            guard code.isVisible else {
+                throw Error.invalidCharacter(
+                    token,
+                    byte: code,
+                    reason: "Type and subtype must not contain control characters or space"
+                )
+            }
+
+            guard !RFC_2045.Grammar.tspecials.contains(code) else {
+                throw Error.invalidCharacter(
+                    token,
+                    byte: code,
+                    reason: "Type and subtype must not contain tspecials: ()<>@,;:\\\"/[]?="
+                )
             }
         }
-        return buffer
-    }
-
-    private static func parameterValueRequiresQuoting(_ value: String) -> Bool {
-        value.isEmpty || !value.utf8.allSatisfy(RFC_2045.Parse._isTokenChar)
-    }
-
-    private static func quotedStringBytes(_ value: String) -> [UInt8] {
-        var out: [UInt8] = [0x22]
-        for byte in value.utf8 {
-            if byte == 0x22 || byte == 0x5C {
-                out.append(0x5C)
-            }
-            out.append(byte)
-        }
-        out.append(0x22)
-        return out
-    }
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        serializeBytes(value, into: &buffer)
-    }
-
-    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
-        _ contentType: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: canonicalSerialization(contentType))
     }
 }
 
-extension RFC_2045.ContentType: ASCII.Parseable {
+extension RFC_2045.ContentType {
 
     public init(_ string: some StringProtocol) throws(Error) {
-        try self.init(ascii: [Byte](string.utf8))
+        try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
 
-    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
+
         guard !bytes.isEmpty else {
             throw Error.empty
         }
 
         let codes: [ASCII.Code]
         do throws(ASCII.Code.Error) {
-            codes = try [ASCII.Code](bytes)
+            codes = try RFC_2045.Grammar.codes(bytes)
         } catch {
             throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))
         }
 
-        let typeSubtypeCodes: ArraySlice<ASCII.Code>
-        let parametersCodes: ArraySlice<ASCII.Code>?
+        let text = RFC_2045.Grammar.string(codes)
 
-        if let firstSemicolon = codes.firstIndex(of: Code.semicolon) {
-            typeSubtypeCodes = codes[..<firstSemicolon]
-            parametersCodes = codes[(firstSemicolon + 1)...]
+        let mediaTypeCodes: ArraySlice<ASCII.Code>
+        let parameterCodes: ArraySlice<ASCII.Code>?
+
+        if let firstSemicolon = codes.firstIndex(of: ASCII.Code.semicolon) {
+            mediaTypeCodes = codes[..<firstSemicolon]
+            parameterCodes = codes[(firstSemicolon + 1)...]
         } else {
-            typeSubtypeCodes = codes[...]
-            parametersCodes = nil
+            mediaTypeCodes = codes[...]
+            parameterCodes = nil
         }
 
-        guard let solidus = typeSubtypeCodes.firstIndex(of: Code.solidus) else {
-            throw Error.missingSeparator(String(decoding: bytes, as: UTF8.self))
+        guard let solidus = mediaTypeCodes.firstIndex(of: ASCII.Code.solidus) else {
+            throw Error.missingSeparator(text)
         }
 
-        let typeCodes = Self.trimmingWhitespace(typeSubtypeCodes[..<solidus])
-        let subtypeCodes = Self.trimmingWhitespace(typeSubtypeCodes[(solidus + 1)...])
+        let typeCodes = RFC_2045.Grammar.trimmingWhitespace(mediaTypeCodes[..<solidus])
+        let subtypeCodes = RFC_2045.Grammar.trimmingWhitespace(
+            mediaTypeCodes[(solidus + 1)...]
+        )
 
         guard !typeCodes.isEmpty else {
-            throw Error.emptyType(String(decoding: bytes, as: UTF8.self))
+            throw Error.emptyType(text)
         }
 
         guard !subtypeCodes.isEmpty else {
-            throw Error.emptySubtype(String(decoding: bytes, as: UTF8.self))
+            throw Error.emptySubtype(text)
         }
 
-        let type = String(decoding: typeCodes, as: UTF8.self).lowercased()
-        let subtype = String(decoding: subtypeCodes, as: UTF8.self).lowercased()
+        var parameters: [RFC_2045.Parameter.Name: String] = [:]
 
-        var params: [RFC_2045.Parameter.Name: String] = [:]
-
-        if let parametersCodes {
-            let pCodes = Array(parametersCodes)
-            var segStart = 0
-
-            func processParam(_ lo: Int, _ hi: Int) {
-                let segment = pCodes[lo..<hi]
-                guard let equalsIndex = segment.firstIndex(of: Code.equalsSign) else {
-                    return
+        if let parameterCodes {
+            for segment in Self.parameterSegments(parameterCodes) {
+                guard let parameter = try Self.parameter(segment, in: text) else {
+                    continue
                 }
-
-                let keyCodes = Self.trimmingWhitespace(segment[..<equalsIndex])
-                var valueCodes = Array(
-                    Self.trimmingWhitespace(segment[(equalsIndex &+ 1)...])
-                )
-
-                guard !keyCodes.isEmpty else {
-                    return
-                }
-
-                let isQuoted =
-                    valueCodes.count >= 2
-                    && valueCodes.first == Code.quotationMark
-                    && valueCodes.last == Code.quotationMark
-                if isQuoted {
-                    valueCodes = Array(valueCodes.dropFirst().dropLast())
-                    var unescaped: [ASCII.Code] = []
-                    unescaped.reserveCapacity(valueCodes.count)
-                    var escaped = false
-                    for code in valueCodes {
-                        if escaped {
-                            unescaped.append(code)
-                            escaped = false
-                        } else if code == Code.reverseSolidus {
-                            escaped = true
-                        } else {
-                            unescaped.append(code)
-                        }
-                    }
-                    valueCodes = unescaped
-                }
-
-                let key = RFC_2045.Parameter.Name(
-                    rawValue: String(decoding: keyCodes, as: UTF8.self).lowercased()
-                )
-                let value = String(decoding: valueCodes, as: UTF8.self)
-
-                params[key] = value
+                parameters[parameter.name] = parameter.value
             }
-
-            var inQuotedString = false
-            var inQuotedPair = false
-            for idx in 0..<pCodes.count {
-                let code = pCodes[idx]
-                if inQuotedPair {
-                    inQuotedPair = false
-                } else if inQuotedString {
-                    if code == Code.reverseSolidus {
-                        inQuotedPair = true
-                    } else if code == Code.quotationMark {
-                        inQuotedString = false
-                    }
-                } else if code == Code.quotationMark {
-                    inQuotedString = true
-                } else if code == Code.semicolon {
-                    processParam(segStart, idx)
-                    segStart = idx &+ 1
-                }
-            }
-            processParam(segStart, pCodes.count)
         }
 
-        self.init(__unchecked: (), type: type, subtype: subtype, parameters: params)
+        try self.init(
+            type: RFC_2045.Grammar.string(typeCodes),
+            subtype: RFC_2045.Grammar.string(subtypeCodes),
+            parameters: parameters
+        )
     }
 
-    private static func trimmingWhitespace(
+    private static func parameterSegments(
         _ codes: ArraySlice<ASCII.Code>
-    ) -> ArraySlice<ASCII.Code> {
-        var start = codes.startIndex
-        var end = codes.endIndex
-        while start < end && Self.isWhitespace(codes[start]) {
-            start += 1
+    ) -> [ArraySlice<ASCII.Code>] {
+
+        var segments: [ArraySlice<ASCII.Code>] = []
+        var segmentStart = codes.startIndex
+        var inQuotedString = false
+        var inQuotedPair = false
+
+        for index in codes.indices {
+
+            let code = codes[index]
+
+            if inQuotedPair {
+                inQuotedPair = false
+            } else if inQuotedString {
+                if code == ASCII.Code.reverseSolidus {
+                    inQuotedPair = true
+                } else if code == ASCII.Code.quotationMark {
+                    inQuotedString = false
+                }
+            } else if code == ASCII.Code.quotationMark {
+                inQuotedString = true
+            } else if code == ASCII.Code.semicolon {
+                segments.append(codes[segmentStart..<index])
+                segmentStart = index + 1
+            }
         }
-        while end > start && Self.isWhitespace(codes[end - 1]) {
-            end -= 1
-        }
-        return codes[start..<end]
+
+        segments.append(codes[segmentStart...])
+        return segments
     }
 
-    private static func isWhitespace(_ code: ASCII.Code) -> Bool {
-        code == Code.space
-            || code == Code.htab
-            || code == Code.lf
-            || code == Code.cr
-    }
-}
+    private static func parameter(
+        _ segment: ArraySlice<ASCII.Code>,
+        in text: String
+    ) throws(Error) -> (name: RFC_2045.Parameter.Name, value: String)? {
 
-extension [Byte] {
+        let trimmed = RFC_2045.Grammar.trimmingWhitespace(segment)
 
-    public init(_ contentType: RFC_2045.ContentType) {
-
-        self = RFC_2045.ContentType.canonicalSerialization(contentType)
-    }
-}
-
-extension RFC_2045.ContentType: Swift.RawRepresentable {
-
-    public var rawValue: String {
-        String(decoding: serialized, as: UTF8.self)
-    }
-
-    public init?(rawValue: String) {
-        do throws(Error) {
-            try self.init(rawValue)
-        } catch {
+        guard !trimmed.isEmpty else {
             return nil
         }
-    }
-}
 
-extension RFC_2045.ContentType: CustomStringConvertible {
+        guard let equals = trimmed.firstIndex(of: ASCII.Code.equalsSign) else {
+            throw Error.invalidParameter(text, reason: "Parameter is missing its '=' sign")
+        }
 
-    public var description: String {
-        String(decoding: serialized, as: UTF8.self)
+        let nameCodes = RFC_2045.Grammar.trimmingWhitespace(trimmed[..<equals])
+        let valueCodes = RFC_2045.Grammar.trimmingWhitespace(trimmed[(equals + 1)...])
+
+        let name: RFC_2045.Parameter.Name
+        do throws(RFC_2045.Parameter.Name.Error) {
+            name = try RFC_2045.Parameter.Name(
+                ascii: nameCodes.lazy.map(\.byte)
+            )
+        } catch {
+            throw Error.invalidParameter(text, reason: error.description)
+        }
+
+        let isQuoted =
+            valueCodes.count >= 2
+            && valueCodes.first == ASCII.Code.quotationMark
+            && valueCodes.last == ASCII.Code.quotationMark
+
+        guard isQuoted else {
+            guard !valueCodes.isEmpty else {
+                throw Error.invalidParameter(text, reason: "Parameter value is empty")
+            }
+            guard valueCodes.allSatisfy(RFC_2045.Grammar.isTokenCharacter) else {
+                throw Error.invalidParameter(
+                    text,
+                    reason: "Parameter value must be a token or a quoted-string"
+                )
+            }
+            return (name, RFC_2045.Grammar.string(valueCodes))
+        }
+
+        var unescaped: [ASCII.Code] = []
+        unescaped.reserveCapacity(valueCodes.count)
+        var escaped = false
+        for code in valueCodes.dropFirst().dropLast() {
+            if escaped {
+                unescaped.append(code)
+                escaped = false
+            } else if code == ASCII.Code.reverseSolidus {
+                escaped = true
+            } else {
+                unescaped.append(code)
+            }
+        }
+
+        return (name, RFC_2045.Grammar.string(unescaped))
     }
 }
 
 extension RFC_2045.ContentType {
 
-    public var headerValue: String {
-        String(decoding: serialized, as: UTF8.self)
-    }
-
     public var charset: RFC_2045.Charset? {
-        parameters[.charset].map { RFC_2045.Charset($0) }
+        parameters[.charset].flatMap { value in
+            try? RFC_2045.Charset(value)
+        }
     }
 
     public var boundary: String? {
@@ -312,11 +274,11 @@ extension RFC_2045.ContentType {
     }
 
     public var isMultipart: Bool {
-        type == "multipart"
+        type.lowercased() == "multipart"
     }
 
     public var isText: Bool {
-        type == "text"
+        type.lowercased() == "text"
     }
 }
 
@@ -373,15 +335,11 @@ extension RFC_2045.ContentType {
     )
 
     public static func applicationOctetStream(name: String? = nil) -> RFC_2045.ContentType {
-        var params: [RFC_2045.Parameter.Name: String] = [:]
-        if let name {
-            params[.init(rawValue: "name")] = name
-        }
-        return RFC_2045.ContentType(
+        RFC_2045.ContentType(
             __unchecked: (),
             type: "application",
             subtype: "octet-stream",
-            parameters: params
+            parameters: name.map { [.name: $0] } ?? [:]
         )
     }
 
@@ -392,15 +350,11 @@ extension RFC_2045.ContentType {
     )
 
     public static func applicationPDF(name: String? = nil) -> RFC_2045.ContentType {
-        var params: [RFC_2045.Parameter.Name: String] = [:]
-        if let name {
-            params[.init(rawValue: "name")] = name
-        }
-        return RFC_2045.ContentType(
+        RFC_2045.ContentType(
             __unchecked: (),
             type: "application",
             subtype: "pdf",
-            parameters: params
+            parameters: name.map { [.name: $0] } ?? [:]
         )
     }
 
@@ -411,15 +365,11 @@ extension RFC_2045.ContentType {
     )
 
     public static func imageJPEG(name: String? = nil) -> RFC_2045.ContentType {
-        var params: [RFC_2045.Parameter.Name: String] = [:]
-        if let name {
-            params[.init(rawValue: "name")] = name
-        }
-        return RFC_2045.ContentType(
+        RFC_2045.ContentType(
             __unchecked: (),
             type: "image",
             subtype: "jpeg",
-            parameters: params
+            parameters: name.map { [.name: $0] } ?? [:]
         )
     }
 
@@ -430,15 +380,11 @@ extension RFC_2045.ContentType {
     )
 
     public static func imagePNG(name: String? = nil) -> RFC_2045.ContentType {
-        var params: [RFC_2045.Parameter.Name: String] = [:]
-        if let name {
-            params[.init(rawValue: "name")] = name
-        }
-        return RFC_2045.ContentType(
+        RFC_2045.ContentType(
             __unchecked: (),
             type: "image",
             subtype: "png",
-            parameters: params
+            parameters: name.map { [.name: $0] } ?? [:]
         )
     }
 
@@ -449,15 +395,11 @@ extension RFC_2045.ContentType {
     )
 
     public static func imageGIF(name: String? = nil) -> RFC_2045.ContentType {
-        var params: [RFC_2045.Parameter.Name: String] = [:]
-        if let name {
-            params[.init(rawValue: "name")] = name
-        }
-        return RFC_2045.ContentType(
+        RFC_2045.ContentType(
             __unchecked: (),
             type: "image",
             subtype: "gif",
-            parameters: params
+            parameters: name.map { [.name: $0] } ?? [:]
         )
     }
 }

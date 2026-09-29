@@ -1,26 +1,18 @@
-public import ASCII_Serializer
-public import Binary_Serializable
-import INCITS_4_1986
-public import Parseable_ASCII
-
-private typealias Code = ASCII.Code
+import ASCII
+public import Byte
+import Byte
 
 extension RFC_2045 {
 
-    public struct Charset: Sendable, Codable {
+    public struct Charset: Sendable {
 
         public let rawValue: String
 
-        init(
+        public init(
             __unchecked: Void,
             rawValue: String
         ) {
             self.rawValue = rawValue
-        }
-
-        public init(_ rawValue: String) {
-
-            self.rawValue = rawValue.uppercased()
         }
     }
 }
@@ -45,44 +37,51 @@ public func == (lhs: RFC_2045.Charset?, rhs: String) -> Bool {
     return lhs.rawValue.uppercased() == rhs.uppercased()
 }
 
-extension RFC_2045.Charset: Swift.RawRepresentable, ASCII.Serializable, Binary.Serializable {
+extension RFC_2045.Charset: Swift.RawRepresentable {
 
     public init?(rawValue: String) {
-        self.init(rawValue)
-    }
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: value.serialized)
-    }
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == ASCII.Code {
-        for byte in value.rawValue.utf8 { buffer.append(ASCII.Code(byte)) }
+        do throws(Error) {
+            try self.init(rawValue)
+        } catch {
+            return nil
+        }
     }
 }
 
-extension RFC_2045.Charset: ASCII.Parseable {
+extension RFC_2045.Charset: CustomStringConvertible {
 
-    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
+    public var description: String {
+        rawValue
+    }
+}
+
+extension RFC_2045.Charset {
+
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
+    }
+
+    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
+
         guard !bytes.isEmpty else {
             throw Error.empty
         }
 
         let codes: [ASCII.Code]
         do throws(ASCII.Code.Error) {
-            codes = try [ASCII.Code](bytes)
+            var built: [ASCII.Code] = []
+            built.reserveCapacity(bytes.count)
+            for byte in bytes {
+                built.append(try ASCII.Code(byte))
+            }
+            codes = built
         } catch {
             throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))
         }
 
         for code in codes {
-            guard code.isVisible || code == Code.hyphen else {
+            guard code.isVisible || code == ASCII.Code.hyphen else {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
                     byte: code,
@@ -91,22 +90,10 @@ extension RFC_2045.Charset: ASCII.Parseable {
             }
         }
 
-        let rawValue = String(decoding: bytes, as: UTF8.self).uppercased()
-        self.init(__unchecked: (), rawValue: rawValue)
-    }
-}
-
-extension [Byte] {
-
-    public init(_ charset: RFC_2045.Charset) {
-        self = [Byte](charset.rawValue.utf8)
-    }
-}
-
-extension RFC_2045.Charset: CustomStringConvertible {
-
-    public var description: String {
-        String(decoding: serialized, as: UTF8.self)
+        self.init(
+            __unchecked: (),
+            rawValue: String(decoding: bytes, as: UTF8.self).uppercased()
+        )
     }
 }
 

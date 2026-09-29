@@ -1,47 +1,30 @@
-public import ASCII_Serializer
-public import Binary_Serializable
-public import Format
-import INCITS_4_1986
-public import Parseable_ASCII
+import ASCII
+public import Byte
+import Byte
 
 extension RFC_2045.Parameter {
 
-    public struct Name: Sendable, Codable {
+    public struct Name: Sendable {
 
-        internal let storage: Format.Case.Insensitive
+        public let rawValue: String
 
-        init(
+        public init(
             __unchecked: Void,
             rawValue: String
         ) {
-            self.storage = Format.Case.Insensitive(rawValue)
+            self.rawValue = rawValue
         }
-
-        public init(rawValue: String) {
-            self.storage = Format.Case.Insensitive(rawValue)
-        }
-
-        public init(_ caseInsensitive: Format.Case.Insensitive) {
-            self.storage = caseInsensitive
-        }
-    }
-}
-
-extension RFC_2045.Parameter.Name {
-
-    public var rawValue: String {
-        storage.value.lowercased()
     }
 }
 
 extension RFC_2045.Parameter.Name: Hashable {
 
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(storage)
+        hasher.combine(rawValue.lowercased())
     }
 
     public static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.storage == rhs.storage
+        lhs.rawValue.lowercased() == rhs.rawValue.lowercased()
     }
 
     public static func == (lhs: Self, rhs: String) -> Bool {
@@ -49,59 +32,55 @@ extension RFC_2045.Parameter.Name: Hashable {
     }
 }
 
-extension RFC_2045.Parameter.Name: ASCII.Serializable, Binary.Serializable {
+extension RFC_2045.Parameter.Name: Comparable {
 
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: value.serialized)
-    }
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == ASCII.Code {
-        for byte in value.rawValue.utf8 { buffer.append(ASCII.Code(byte)) }
+    public static func < (lhs: Self, rhs: Self) -> Bool {
+        lhs.rawValue.lowercased() < rhs.rawValue.lowercased()
     }
 }
 
-extension RFC_2045.Parameter.Name: ASCII.Parseable {
+extension RFC_2045.Parameter.Name: Swift.RawRepresentable {
+
+    public init?(rawValue: String) {
+        do throws(Error) {
+            try self.init(rawValue)
+        } catch {
+            return nil
+        }
+    }
+}
+
+extension RFC_2045.Parameter.Name: CustomStringConvertible {
+
+    public var description: String {
+        rawValue
+    }
+}
+
+extension RFC_2045.Parameter.Name {
 
     public init(_ string: some StringProtocol) throws(Error) {
-        try self.init(ascii: [Byte](string.utf8))
+        try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
 
-    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
+
         guard !bytes.isEmpty else {
             throw Error.empty
         }
 
         let codes: [ASCII.Code]
         do throws(ASCII.Code.Error) {
-            codes = try [ASCII.Code](bytes)
+            var built: [ASCII.Code] = []
+            built.reserveCapacity(bytes.count)
+            for byte in bytes {
+                built.append(try ASCII.Code(byte))
+            }
+            codes = built
         } catch {
             throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))
         }
-
-        let tspecials: Set<ASCII.Code> = [
-            ASCII.Code.leftParenthesis,
-            ASCII.Code.rightParenthesis,
-            ASCII.Code.lessThanSign,
-            ASCII.Code.greaterThanSign,
-            ASCII.Code.atSign,
-            ASCII.Code.comma,
-            ASCII.Code.semicolon,
-            ASCII.Code.colon,
-            ASCII.Code.backslash,
-            ASCII.Code.quotationMark,
-            ASCII.Code.solidus,
-            ASCII.Code.leftSquareBracket,
-            ASCII.Code.rightSquareBracket,
-            ASCII.Code.questionMark,
-            ASCII.Code.equalsSign,
-        ]
 
         for code in codes {
 
@@ -113,7 +92,7 @@ extension RFC_2045.Parameter.Name: ASCII.Parseable {
                 )
             }
 
-            guard !tspecials.contains(code) else {
+            guard !RFC_2045.Grammar.tspecials.contains(code) else {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
                     byte: code,
@@ -122,22 +101,7 @@ extension RFC_2045.Parameter.Name: ASCII.Parseable {
             }
         }
 
-        let rawValue = String(decoding: bytes, as: UTF8.self)
-        self.init(__unchecked: (), rawValue: rawValue)
-    }
-}
-
-extension RFC_2045.Parameter.Name: RawRepresentable {}
-extension RFC_2045.Parameter.Name: CustomStringConvertible {
-
-    public var description: String {
-        String(decoding: serialized, as: UTF8.self)
-    }
-}
-
-extension RFC_2045.Parameter.Name: Comparable {
-    public static func < (lhs: RFC_2045.Parameter.Name, rhs: RFC_2045.Parameter.Name) -> Bool {
-        lhs.storage < rhs.storage
+        self.init(__unchecked: (), rawValue: String(decoding: bytes, as: UTF8.self))
     }
 }
 
@@ -147,6 +111,5 @@ extension RFC_2045.Parameter.Name {
 
     public static let boundary = Self(__unchecked: (), rawValue: "boundary")
 
-    @available(*, deprecated, message: "Use Content-Disposition filename parameter per RFC 2183")
     public static let name = Self(__unchecked: (), rawValue: "name")
 }

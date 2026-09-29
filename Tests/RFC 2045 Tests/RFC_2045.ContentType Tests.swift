@@ -1,427 +1,193 @@
+import Byte
+import Byte
+import RFC_2045
 import Testing
 
-@testable import RFC_2045
-
 @Suite
-struct `ContentType - Parsing Tests` {
-    @Suite
-    struct `Valid Content Types` {
-        @Test
-        func `simple type and subtype`() throws {
-            let ct = try RFC_2045.ContentType("text/plain")
-            #expect(ct.type == "text")
-            #expect(ct.subtype == "plain")
-            #expect(ct.parameters.isEmpty)
-        }
+struct `RFC_2045.ContentType Tests` {
 
-        @Test
-        func `type and subtype with charset parameter`() throws {
-            let ct = try RFC_2045.ContentType("text/html; charset=UTF-8")
-            #expect(ct.type == "text")
-            #expect(ct.subtype == "html")
-            #expect(ct.charset?.rawValue == "UTF-8")
-        }
-
-        @Test
-        func `type and subtype with multiple parameters`() throws {
-            let ct = try RFC_2045.ContentType(
-                "multipart/mixed; boundary=----=_Part_1234; charset=UTF-8"
-            )
-            #expect(ct.type == "multipart")
-            #expect(ct.subtype == "mixed")
-            #expect(ct.boundary == "----=_Part_1234")
-            #expect(ct.charset?.rawValue == "UTF-8")
-        }
-
-        @Test
-        func `quoted parameter value`() throws {
-            let ct = try RFC_2045.ContentType("multipart/mixed; boundary=\"----=_Part 1234\"")
-            #expect(ct.boundary == "----=_Part 1234")
-        }
-
-        @Test
-        func `case insensitive type and subtype`() throws {
-            let ct1 = try RFC_2045.ContentType("TEXT/PLAIN")
-            let ct2 = try RFC_2045.ContentType("text/plain")
-            #expect(ct1 == ct2)
-        }
-
-        @Test
-        func `whitespace handling`() throws {
-            let ct = try RFC_2045.ContentType("text/plain ; charset = UTF-8")
-            #expect(ct.type == "text")
-            #expect(ct.subtype == "plain")
-            #expect(ct.charset?.rawValue == "UTF-8")
-        }
-
-        @Test
-        func `subtype with plus suffix`() throws {
-            let ct = try RFC_2045.ContentType("application/json+xml")
-            #expect(ct.type == "application")
-            #expect(ct.subtype == "json+xml")
-        }
-    }
-
-    @Suite
-    struct `Error Cases` {
-        @Test
-        func `empty string throws empty error`() {
-            #expect(throws: RFC_2045.ContentType.Error.empty) {
-                try RFC_2045.ContentType("")
-            }
-        }
-
-        @Test
-        func `missing solidus throws missingSeparator`() {
-            #expect {
-                try RFC_2045.ContentType("textplain")
-            } throws: { error in
-                guard case RFC_2045.ContentType.Error.missingSeparator = error else {
-                    return false
-                }
-                return true
-            }
-        }
-
-        @Test
-        func `empty type throws emptyType`() {
-            #expect {
-                try RFC_2045.ContentType("/plain")
-            } throws: { error in
-                guard case RFC_2045.ContentType.Error.emptyType = error else {
-                    return false
-                }
-                return true
-            }
-        }
-
-        @Test
-        func `empty subtype throws emptySubtype`() {
-            #expect {
-                try RFC_2045.ContentType("text/")
-            } throws: { error in
-                guard case RFC_2045.ContentType.Error.emptySubtype = error else {
-                    return false
-                }
-                return true
-            }
-        }
-    }
-}
-
-@Suite
-struct `ContentType - Static Constants Tests` {
     @Test
-    func `textPlain constant`() {
-        let ct = RFC_2045.ContentType.textPlain
-        #expect(ct.type == "text")
-        #expect(ct.subtype == "plain")
-        #expect(ct.parameters.isEmpty)
-        #expect(ct.headerValue == "text/plain")
+    func `a content type is built from a type and a subtype`() throws {
+        let contentType = try RFC_2045.ContentType(type: "text", subtype: "plain")
+        #expect(contentType.type == "text")
+        #expect(contentType.subtype == "plain")
+        #expect(contentType.parameters.isEmpty)
     }
 
     @Test
-    func `textPlainUTF8 constant`() {
-        let ct = RFC_2045.ContentType.textPlainUTF8
-        #expect(ct.type == "text")
-        #expect(ct.subtype == "plain")
-        #expect(ct.charset?.rawValue == "UTF-8")
-        #expect(ct.headerValue == "text/plain; charset=UTF-8")
-    }
-
-    @Test
-    func `textHTML constant`() {
-        let ct = RFC_2045.ContentType.textHTML
-        #expect(ct.type == "text")
-        #expect(ct.subtype == "html")
-        #expect(ct.headerValue == "text/html")
-    }
-
-    @Test
-    func `textHTMLUTF8 constant`() {
-        let ct = RFC_2045.ContentType.textHTMLUTF8
-        #expect(ct.headerValue == "text/html; charset=UTF-8")
-    }
-
-    @Test
-    func `applicationJSON constant`() {
-        let ct = RFC_2045.ContentType.applicationJSON
-        #expect(ct.type == "application")
-        #expect(ct.subtype == "json")
-    }
-
-    @Test
-    func `applicationOctetStream constant`() {
-        let ct = RFC_2045.ContentType.applicationOctetStream
-        #expect(ct.type == "application")
-        #expect(ct.subtype == "octet-stream")
-    }
-
-    @Test
-    func `imageJPEG constant`() {
-        let ct = RFC_2045.ContentType.imageJPEG
-        #expect(ct.type == "image")
-        #expect(ct.subtype == "jpeg")
-    }
-
-    @Test
-    func `imagePNG constant`() {
-        let ct = RFC_2045.ContentType.imagePNG
-        #expect(ct.type == "image")
-        #expect(ct.subtype == "png")
-    }
-}
-
-@Suite
-struct `ContentType - Factory Methods Tests` {
-    @Test
-    func `multipartAlternative factory`() {
-        let ct = RFC_2045.ContentType.multipartAlternative(boundary: "test-boundary")
-        #expect(ct.type == "multipart")
-        #expect(ct.subtype == "alternative")
-        #expect(ct.boundary == "test-boundary")
-        #expect(ct.isMultipart)
-    }
-
-    @Test
-    func `multipartMixed factory`() {
-        let ct = RFC_2045.ContentType.multipartMixed(boundary: "----=_Part_1234")
-        #expect(ct.type == "multipart")
-        #expect(ct.subtype == "mixed")
-        #expect(ct.boundary == "----=_Part_1234")
-    }
-
-    @Test
-    func `applicationOctetStream with name`() {
-        let ct = RFC_2045.ContentType.applicationOctetStream(name: "file.bin")
-        #expect(ct.type == "application")
-        #expect(ct.subtype == "octet-stream")
-        #expect(ct.parameters[.init(rawValue: "name")] == "file.bin")
-    }
-
-    @Test
-    func `imagePNG with name`() {
-        let ct = RFC_2045.ContentType.imagePNG(name: "image.png")
-        #expect(ct.parameters[.init(rawValue: "name")] == "image.png")
-    }
-}
-
-@Suite
-struct `ContentType - Computed Properties Tests` {
-    @Test
-    func `isMultipart returns true for multipart types`() {
-        let ct = RFC_2045.ContentType.multipartMixed(boundary: "test")
-        #expect(ct.isMultipart)
-    }
-
-    @Test
-    func `isMultipart returns false for non-multipart types`() {
-        let ct = RFC_2045.ContentType.textPlain
-        #expect(!ct.isMultipart)
-    }
-
-    @Test
-    func `isText returns true for text types`() {
-        let ct = RFC_2045.ContentType.textHTML
-        #expect(ct.isText)
-    }
-
-    @Test
-    func `isText returns false for non-text types`() {
-        let ct = RFC_2045.ContentType.imageJPEG
-        #expect(!ct.isText)
-    }
-
-    @Test
-    func `charset accessor returns nil when not present`() {
-        let ct = RFC_2045.ContentType.textPlain
-        #expect(ct.charset == nil)
-    }
-
-    @Test
-    func `charset accessor returns value when present`() {
-        let ct = RFC_2045.ContentType.textPlainUTF8
-        #expect(ct.charset?.rawValue == "UTF-8")
-    }
-}
-
-@Suite
-struct `ContentType - Serialization Tests` {
-    @Test
-    func `round-trip simple content type`() throws {
-        let original = RFC_2045.ContentType.textPlain
-        let bytes = [Byte](original)
-        let parsed = try RFC_2045.ContentType(ascii: bytes)
-        #expect(original == parsed)
-    }
-
-    @Test
-    func `round-trip content type with charset`() throws {
-        let original = RFC_2045.ContentType.textPlainUTF8
-        let bytes = [Byte](original)
-        let parsed = try RFC_2045.ContentType(ascii: bytes)
-        #expect(original == parsed)
-    }
-
-    @Test
-    func `round-trip multipart with boundary`() throws {
-        let original = RFC_2045.ContentType.multipartMixed(boundary: "----=_Part_1234")
-        let bytes = [Byte](original)
-        let parsed = try RFC_2045.ContentType(ascii: bytes)
-        #expect(original == parsed)
-    }
-
-    @Test
-    func `string representation matches headerValue`() {
-        let ct = RFC_2045.ContentType.textPlainUTF8
-        #expect(String(ct) == ct.headerValue)
-    }
-}
-
-@Suite
-struct `ContentType - Equality Tests` {
-    @Test
-    func `equal content types are equal`() {
-        let ct1 = RFC_2045.ContentType.textPlain
-        let ct2 = RFC_2045.ContentType.textPlain
-        #expect(ct1 == ct2)
-    }
-
-    @Test
-    func `case insensitive equality`() throws {
-        let ct1 = try RFC_2045.ContentType("TEXT/PLAIN")
-        let ct2 = try RFC_2045.ContentType("text/plain")
-        #expect(ct1 == ct2)
-    }
-
-    @Test
-    func `different types are not equal`() {
-        let ct1 = RFC_2045.ContentType.textPlain
-        let ct2 = RFC_2045.ContentType.textHTML
-        #expect(ct1 != ct2)
-    }
-
-    @Test
-    func `same type different parameters are not equal`() {
-        let ct1 = RFC_2045.ContentType.textPlain
-        let ct2 = RFC_2045.ContentType.textPlainUTF8
-        #expect(ct1 != ct2)
-    }
-}
-
-@Suite
-struct `ContentType - Parameter Quoting Emission` {
-    @Test
-    func `equals-bearing boundary is quoted and round-trips through the parser`() throws {
-        let ct = RFC_2045.ContentType(
-            __unchecked: (),
-            type: "multipart",
-            subtype: "form-data",
-            parameters: [.boundary: "----=_Part_ABC-123"]
-        )
-        #expect(ct.headerValue == #"multipart/form-data; boundary="----=_Part_ABC-123""#)
-
-        let reparsed = try RFC_2045.ContentType(ct.headerValue)
-        #expect(reparsed.boundary == "----=_Part_ABC-123")
-        #expect(reparsed.type == "multipart")
-        #expect(reparsed.subtype == "form-data")
-    }
-
-    @Test
-    func `token-safe value emits bare - byte-identical to the historical form`() {
-        let ct = RFC_2045.ContentType(
-            __unchecked: (),
-            type: "text",
-            subtype: "html",
-            parameters: [.charset: "UTF-8"]
-        )
-        #expect(ct.headerValue == "text/html; charset=UTF-8")
-    }
-
-    @Test
-    func `quote and backslash are backslash-escaped inside quoted-string`() {
-        let ct = RFC_2045.ContentType(
-            __unchecked: (),
-            type: "application",
-            subtype: "octet-stream",
-            parameters: [RFC_2045.Parameter.Name(rawValue: "name"): #"a"b\c d"#]
-        )
-        #expect(
-            ct.headerValue == #"application/octet-stream; name="a\"b\\c d""#
-        )
-    }
-
-    @Test
-    func `empty value is emitted as empty quoted-string`() {
-        let ct = RFC_2045.ContentType(
-            __unchecked: (),
+    func `a content type carries its parameters`() throws {
+        let contentType = try RFC_2045.ContentType(
             type: "text",
             subtype: "plain",
-            parameters: [RFC_2045.Parameter.Name(rawValue: "x"): ""]
+            parameters: [.charset: RFC_2045.Charset.utf8.rawValue]
         )
-        #expect(ct.headerValue == #"text/plain; x="""#)
-    }
-}
-
-extension RFC_2045.ContentType {
-
-    @Suite
-    struct `Edge Case` {
-        @Test
-        func `quoted parameter value containing semicolon is not split`() throws {
-            let ct = try RFC_2045.ContentType(#"multipart/mixed; boundary="a;b"; charset=UTF-8"#)
-            #expect(ct.boundary == "a;b")
-            #expect(ct.charset?.rawValue == "UTF-8")
-        }
-
-        @Test
-        func `quoted-pairs are unescaped when materializing parameter values`() throws {
-            let ct = try RFC_2045.ContentType(#"text/plain; name="a\"b\\c""#)
-            #expect(ct.parameters[RFC_2045.Parameter.Name(rawValue: "name")] == #"a"b\c"#)
-        }
-
-        @Test
-        func `round-trip of semicolon quote and backslash payloads`() throws {
-            let payloads = [#"a;b"#, #"a"b"#, #"a\b"#, #"a;b"c\d e"#]
-            for payload in payloads {
-                let original = RFC_2045.ContentType(
-                    __unchecked: (),
-                    type: "text",
-                    subtype: "plain",
-                    parameters: [RFC_2045.Parameter.Name(rawValue: "name"): payload]
-                )
-                let reparsed = try RFC_2045.ContentType(ascii: [Byte](original))
-                #expect(reparsed == original)
-            }
-        }
+        #expect(contentType.charset == RFC_2045.Charset.utf8)
+        #expect(contentType == RFC_2045.ContentType.textPlainUTF8)
     }
 
-    @Suite
-    struct Unit {
-        @Test
-        func `multi-parameter serialization is canonical and identical across surfaces`() {
-            let ct = RFC_2045.ContentType(
-                __unchecked: (),
-                type: "multipart",
-                subtype: "mixed",
-                parameters: [
-                    RFC_2045.Parameter.Name(rawValue: "boundary"): "xyz",
-                    RFC_2045.Parameter.Name(rawValue: "charset"): "UTF-8",
-                    RFC_2045.Parameter.Name(rawValue: "name"): "f.txt",
-                    RFC_2045.Parameter.Name(rawValue: "type"): "text/plain",
-                ]
-            )
-            let canonical =
-                #"multipart/mixed; boundary=xyz; charset=UTF-8; name=f.txt; type="text/plain""#
-            let canonicalBytes = [Byte](canonical.utf8)
+    @Test
+    func `a multipart content type carries its boundary`() {
+        let contentType = RFC_2045.ContentType.multipartMixed(boundary: "----boundary42")
+        #expect(contentType.isMultipart)
+        #expect(contentType.boundary == "----boundary42")
+    }
 
-            #expect([Byte](ct) == canonicalBytes)
-            #expect(ct.serialized == canonicalBytes)
-            #expect(ct.headerValue == canonical)
+    @Test
+    func `type and subtype are normalised to lower case`() throws {
+        let contentType = try RFC_2045.ContentType(type: "TEXT", subtype: "HTML")
+        #expect(contentType.type == "text")
+        #expect(contentType.subtype == "html")
+        #expect(contentType == RFC_2045.ContentType.textHTML)
+    }
 
-            var asciiBuffer: [ASCII.Code] = []
-            RFC_2045.ContentType.serialize(ct, into: &asciiBuffer)
-            #expect(asciiBuffer.map(\.byte) == canonicalBytes)
+    @Test
+    func `content types compare case-insensitively in type and subtype`() throws {
+        #expect(
+            try RFC_2045.ContentType(type: "Text", subtype: "Plain")
+                == RFC_2045.ContentType(type: "text", subtype: "plain")
+        )
+    }
+
+    @Test
+    func `the text content types classify as text`() {
+        #expect(RFC_2045.ContentType.textPlain.isText)
+        #expect(RFC_2045.ContentType.textHTML.isText)
+        #expect(!RFC_2045.ContentType.applicationJSON.isText)
+    }
+
+    @Test
+    func `the standard content types spell their registered media types`() {
+        #expect(RFC_2045.ContentType.textPlain.subtype == "plain")
+        #expect(RFC_2045.ContentType.textHTML.subtype == "html")
+        #expect(RFC_2045.ContentType.applicationJSON.type == "application")
+        #expect(RFC_2045.ContentType.applicationJSON.subtype == "json")
+        #expect(RFC_2045.ContentType.applicationOctetStream.subtype == "octet-stream")
+        #expect(RFC_2045.ContentType.imageSVG.subtype == "svg+xml")
+        #expect(RFC_2045.ContentType.applicationXWWWFormURLEncoded.subtype
+            == "x-www-form-urlencoded")
+    }
+
+    @Test
+    func `a named attachment content type carries the name parameter`() {
+        let contentType = RFC_2045.ContentType.applicationPDF(name: "invoice.pdf")
+        #expect(contentType.parameters[.name] == "invoice.pdf")
+    }
+
+    @Test
+    func `an empty type is refused`() {
+        #expect(throws: RFC_2045.ContentType.Error.emptyType("")) {
+            try RFC_2045.ContentType(type: "", subtype: "plain")
+        }
+    }
+
+    @Test
+    func `an empty subtype is refused`() {
+        #expect(throws: RFC_2045.ContentType.Error.emptySubtype("")) {
+            try RFC_2045.ContentType(type: "text", subtype: "")
+        }
+    }
+
+    @Test
+    func `a subtype containing a separator is refused`() {
+        #expect(throws: RFC_2045.ContentType.Error.self) {
+            try RFC_2045.ContentType(type: "text", subtype: "plain/other")
+        }
+    }
+
+    @Test
+    func `a type outside ASCII is refused`() {
+        #expect(throws: RFC_2045.ContentType.Error.nonASCII("téxt")) {
+            try RFC_2045.ContentType(type: "téxt", subtype: "plain")
+        }
+    }
+
+    @Test
+    func `a content type reads from its text form`() throws {
+        let contentType = try RFC_2045.ContentType("text/html; charset=UTF-8")
+        #expect(contentType.type == "text")
+        #expect(contentType.subtype == "html")
+        #expect(contentType.charset == RFC_2045.Charset.utf8)
+        #expect(contentType == RFC_2045.ContentType.textHTMLUTF8)
+    }
+
+    @Test
+    func `a content type reads from ASCII bytes`() throws {
+        let contentType = try RFC_2045.ContentType(ascii: [Byte](utf8: "image/png"))
+        #expect(contentType == RFC_2045.ContentType.imagePNG)
+    }
+
+    @Test
+    func `the text form is case-insensitive in type and subtype and ignores surrounding whitespace`() throws {
+        #expect(try RFC_2045.ContentType("TEXT/PLAIN").type == "text")
+        #expect(try RFC_2045.ContentType("  text / plain  ").subtype == "plain")
+    }
+
+    @Test
+    func `the text form reads a quoted parameter value and unescapes its quoted pairs`() throws {
+        let contentType = try RFC_2045.ContentType(#"multipart/mixed; boundary="----=_Part "1234"""#)
+        #expect(contentType.isMultipart)
+        #expect(contentType.boundary == #"----=_Part "1234""#)
+    }
+
+    @Test
+    func `the text form keeps a semicolon inside a quoted parameter value`() throws {
+        let contentType = try RFC_2045.ContentType(#"text/plain; name="a;b"; charset=UTF-8"#)
+        #expect(contentType.parameters[.name] == "a;b")
+        #expect(contentType.charset == RFC_2045.Charset.utf8)
+    }
+
+    @Test
+    func `parameter names in the text form match case-insensitively`() throws {
+        let contentType = try RFC_2045.ContentType("multipart/mixed; BOUNDARY=abc; Charset=UTF-8")
+        #expect(contentType.boundary == "abc")
+        #expect(contentType.parameters[.charset] == "UTF-8")
+    }
+
+    @Test
+    func `a trailing semicolon in the text form is tolerated`() throws {
+        let contentType = try RFC_2045.ContentType("text/plain; charset=UTF-8;")
+        #expect(contentType.charset == RFC_2045.Charset.utf8)
+    }
+
+    @Test
+    func `an empty text form is refused`() {
+        #expect(throws: RFC_2045.ContentType.Error.empty) {
+            try RFC_2045.ContentType("")
+        }
+    }
+
+    @Test
+    func `a text form without a solidus is refused`() {
+        #expect(throws: RFC_2045.ContentType.Error.missingSeparator("text")) {
+            try RFC_2045.ContentType("text")
+        }
+    }
+
+    @Test
+    func `a text form with an empty subtype is refused`() {
+        #expect(throws: RFC_2045.ContentType.Error.emptySubtype("text/")) {
+            try RFC_2045.ContentType("text/")
+        }
+    }
+
+    @Test
+    func `a text form with a parameter that has no value is refused`() {
+        #expect(throws: RFC_2045.ContentType.Error.self) {
+            try RFC_2045.ContentType("text/plain; charset")
+        }
+    }
+
+    @Test
+    func `a text form with a parameter name containing a tspecial is refused`() {
+        #expect(throws: RFC_2045.ContentType.Error.self) {
+            try RFC_2045.ContentType("text/plain; char@set=UTF-8")
+        }
+    }
+
+    @Test
+    func `a text form outside ASCII is refused`() {
+        #expect(throws: RFC_2045.ContentType.Error.nonASCII("téxt/plain")) {
+            try RFC_2045.ContentType("téxt/plain")
         }
     }
 }

@@ -1,4 +1,4 @@
-public import ASCII_Serializer
+public import ASCII
 
 extension RFC_2045.Parameter.Name {
 
@@ -20,7 +20,7 @@ extension RFC_2045.Parameter.Name.Error: CustomStringConvertible {
 
         case .invalidCharacter(let value, let byte, let reason):
             return
-                "Invalid byte 0x\(String(byte, radix: 16).uppercased()) in '\(value)': \(reason)"
+                "Invalid byte 0x\(String(byte.underlying, radix: 16).uppercased()) in '\(value)': \(reason)"
 
         case .nonASCII(let value):
             return "Non-ASCII byte in '\(value)'"

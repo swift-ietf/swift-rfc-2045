@@ -1,300 +1,73 @@
-import Format
+import Byte
+import Byte
+import RFC_2045
 import Testing
 
-@testable import RFC_2045
-
 @Suite
-struct `Parameter.Name - Parsing Tests` {
-    @Suite
-    struct `Valid Names` {
-        @Test
-        func `parse charset`() throws {
-            let name = try RFC_2045.Parameter.Name(ascii: [Byte]("charset".utf8))
-            #expect(name.rawValue == "charset")
-        }
+struct `RFC_2045.Parameter.Name Tests` {
 
-        @Test
-        func `parse boundary`() throws {
-            let name = try RFC_2045.Parameter.Name(ascii: [Byte]("boundary".utf8))
-            #expect(name.rawValue == "boundary")
-        }
-
-        @Test
-        func `parse custom parameter`() throws {
-            let name = try RFC_2045.Parameter.Name(ascii: [Byte]("x-custom".utf8))
-            #expect(name.rawValue == "x-custom")
-        }
-
-        @Test
-        func `parse with digits`() throws {
-            let name = try RFC_2045.Parameter.Name(ascii: [Byte]("param123".utf8))
-            #expect(name.rawValue == "param123")
-        }
-
-        @Test
-        func `parse mixed case becomes lowercase`() {
-            let name = RFC_2045.Parameter.Name(rawValue: "CHARSET")
-            #expect(name.rawValue == "charset")
-        }
-    }
-
-    @Suite
-    struct `Error Cases` {
-        @Test
-        func `empty bytes throws empty error`() {
-            #expect(throws: RFC_2045.Parameter.Name.Error.empty) {
-                try RFC_2045.Parameter.Name(ascii: [Byte]())
-            }
-        }
-
-        @Test
-        func `space character throws error`() {
-            #expect {
-                try RFC_2045.Parameter.Name(ascii: [Byte]("char set".utf8))
-            } throws: { error in
-                guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
-                    return false
-                }
-                return true
-            }
-        }
-
-        @Test
-        func `control character throws error`() {
-            #expect {
-                try RFC_2045.Parameter.Name(ascii: [0x00])
-            } throws: { error in
-                guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
-                    return false
-                }
-                return true
-            }
-        }
-
-        @Test
-        func `equals sign throws error (tspecial)`() {
-            #expect {
-                try RFC_2045.Parameter.Name(ascii: [Byte]("param=value".utf8))
-            } throws: { error in
-                guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
-                    return false
-                }
-                return true
-            }
-        }
-
-        @Test
-        func `semicolon throws error (tspecial)`() {
-            #expect {
-                try RFC_2045.Parameter.Name(ascii: [Byte]("param;name".utf8))
-            } throws: { error in
-                guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
-                    return false
-                }
-                return true
-            }
-        }
-
-        @Test
-        func `solidus throws error (tspecial)`() {
-            #expect {
-                try RFC_2045.Parameter.Name(ascii: [Byte]("param/name".utf8))
-            } throws: { error in
-                guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
-                    return false
-                }
-                return true
-            }
-        }
-
-        @Test
-        func `quotation mark throws error (tspecial)`() {
-            #expect {
-                try RFC_2045.Parameter.Name(ascii: [Byte]("param\"name".utf8))
-            } throws: { error in
-                guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
-                    return false
-                }
-                return true
-            }
-        }
-
-        @Test
-        func `left parenthesis throws error (tspecial)`() {
-            #expect {
-                try RFC_2045.Parameter.Name(ascii: [Byte]("param(name".utf8))
-            } throws: { error in
-                guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
-                    return false
-                }
-                return true
-            }
-        }
-
-        @Test
-        func `at sign throws error (tspecial)`() {
-            #expect {
-                try RFC_2045.Parameter.Name(ascii: [Byte]("param@name".utf8))
-            } throws: { error in
-                guard case RFC_2045.Parameter.Name.Error.invalidCharacter = error else {
-                    return false
-                }
-                return true
-            }
-        }
-    }
-}
-
-@Suite
-struct `Parameter.Name - Static Constants Tests` {
     @Test
-    func `charset constant`() {
+    func `a parameter name reads from its text form`() throws {
+        let name = try RFC_2045.Parameter.Name("charset")
+        #expect(name == RFC_2045.Parameter.Name.charset)
+    }
+
+    @Test
+    func `a parameter name reads from ASCII bytes`() throws {
+        let name = try RFC_2045.Parameter.Name(ascii: [Byte](utf8: "boundary"))
+        #expect(name == RFC_2045.Parameter.Name.boundary)
+    }
+
+    @Test
+    func `parameter names compare case-insensitively`() throws {
+        #expect(try RFC_2045.Parameter.Name("CharSet") == RFC_2045.Parameter.Name("charset"))
+        #expect(try RFC_2045.Parameter.Name("BOUNDARY") == "boundary")
+    }
+
+    @Test
+    func `a parameter name keeps the spelling it was given`() throws {
+        let name = try RFC_2045.Parameter.Name("CharSet")
+        #expect(name.rawValue == "CharSet")
+        #expect(name.description == "CharSet")
+    }
+
+    @Test
+    func `the standard parameter names spell their RFC 2045 attribute names`() {
         #expect(RFC_2045.Parameter.Name.charset.rawValue == "charset")
-    }
-
-    @Test
-    func `boundary constant`() {
         #expect(RFC_2045.Parameter.Name.boundary.rawValue == "boundary")
-    }
-
-    @Test
-    @available(*, deprecated)
-    func `name constant (deprecated)`() {
         #expect(RFC_2045.Parameter.Name.name.rawValue == "name")
     }
-}
 
-@Suite
-struct `Parameter.Name - Equality Tests` {
     @Test
-    func `equal names are equal`() {
-        let name1 = RFC_2045.Parameter.Name.charset
-        let name2 = RFC_2045.Parameter.Name.charset
-        #expect(name1 == name2)
+    func `parameter names order case-insensitively`() throws {
+        #expect(try RFC_2045.Parameter.Name("Boundary") < RFC_2045.Parameter.Name("charset"))
     }
 
     @Test
-    func `case insensitive equality`() {
-        let name1 = RFC_2045.Parameter.Name(rawValue: "charset")
-        let name2 = RFC_2045.Parameter.Name(rawValue: "CHARSET")
-        #expect(name1 == name2)
+    func `an empty parameter name is refused`() {
+        #expect(throws: RFC_2045.Parameter.Name.Error.empty) {
+            try RFC_2045.Parameter.Name("")
+        }
     }
 
     @Test
-    func `equality with string - same case`() {
-        let name = RFC_2045.Parameter.Name.charset
-        #expect(name == "charset")
+    func `a parameter name containing a tspecial is refused`() {
+        #expect(throws: RFC_2045.Parameter.Name.Error.self) {
+            try RFC_2045.Parameter.Name("char;set")
+        }
     }
 
     @Test
-    func `equality with string - different case`() {
-        let name = RFC_2045.Parameter.Name.charset
-        #expect(name == "CHARSET")
+    func `a parameter name containing a space is refused`() {
+        #expect(throws: RFC_2045.Parameter.Name.Error.self) {
+            try RFC_2045.Parameter.Name("char set")
+        }
     }
 
     @Test
-    func `different names are not equal`() {
-        let name1 = RFC_2045.Parameter.Name.charset
-        let name2 = RFC_2045.Parameter.Name.boundary
-        #expect(name1 != name2)
-    }
-}
-
-@Suite
-struct `Parameter.Name - Hashable Tests` {
-    @Test
-    func `same name produces same hash`() {
-        let name1 = RFC_2045.Parameter.Name.charset
-        let name2 = RFC_2045.Parameter.Name(rawValue: "charset")
-        #expect(name1.hashValue == name2.hashValue)
-    }
-
-    @Test
-    func `case insensitive hashing`() {
-        let name1 = RFC_2045.Parameter.Name(rawValue: "charset")
-        let name2 = RFC_2045.Parameter.Name(rawValue: "CHARSET")
-        #expect(name1.hashValue == name2.hashValue)
-    }
-
-    @Test
-    func `names work in Set`() {
-        var set: Set<RFC_2045.Parameter.Name> = []
-        set.insert(.charset)
-        set.insert(RFC_2045.Parameter.Name(rawValue: "CHARSET"))
-        #expect(set.count == 1)
-    }
-
-    @Test
-    func `names work as Dictionary keys`() {
-        var dict: [RFC_2045.Parameter.Name: String] = [:]
-        dict[.charset] = "first"
-        dict[RFC_2045.Parameter.Name(rawValue: "CHARSET")] = "second"
-        #expect(dict.count == 1)
-        #expect(dict[.charset] == "second")
-    }
-}
-
-@Suite
-struct `Parameter.Name - Comparable Tests` {
-    @Test
-    func `boundary comes before charset`() {
-        #expect(RFC_2045.Parameter.Name.boundary < RFC_2045.Parameter.Name.charset)
-    }
-
-    @Test
-    func `case insensitive comparison`() {
-        let name1 = RFC_2045.Parameter.Name(rawValue: "ALPHA")
-        let name2 = RFC_2045.Parameter.Name(rawValue: "beta")
-        #expect(name1 < name2)
-    }
-
-    @Test
-    func `sorting works correctly`() {
-        let names: [RFC_2045.Parameter.Name] = [
-            .charset,
-            .boundary,
-            RFC_2045.Parameter.Name(rawValue: "x-custom"),
-        ]
-        let sorted = names.sorted()
-        #expect(sorted[0] == .boundary)
-        #expect(sorted[1] == .charset)
-        #expect(sorted[2].rawValue == "x-custom")
-    }
-}
-
-@Suite
-struct `Parameter.Name - Serialization Tests` {
-    @Test(arguments: [
-        RFC_2045.Parameter.Name.charset,
-        RFC_2045.Parameter.Name.boundary,
-        RFC_2045.Parameter.Name(rawValue: "x-custom"),
-    ])
-    func `round-trip serialization`(name: RFC_2045.Parameter.Name) throws {
-        let bytes = [Byte](name)
-        let parsed = try RFC_2045.Parameter.Name(ascii: bytes)
-        #expect(name == parsed)
-    }
-
-    @Test
-    func `description matches rawValue`() {
-        let name = RFC_2045.Parameter.Name.charset
-        #expect(name.description == name.rawValue)
-    }
-
-    @Test
-    func `byte serialization produces lowercase`() {
-        let name = RFC_2045.Parameter.Name(rawValue: "CHARSET")
-        let bytes = [Byte](name)
-        #expect(bytes == [Byte]("charset".utf8))
-    }
-}
-
-@Suite
-struct `Parameter.Name - CaseInsensitive Initialization Tests` {
-    @Test
-    func `init from CaseInsensitive string`() {
-        let caseInsensitive = Format.Case.Insensitive("Charset")
-        let name = RFC_2045.Parameter.Name(caseInsensitive)
-        #expect(name.rawValue == "charset")
+    func `a parameter name outside ASCII is refused`() {
+        #expect(throws: RFC_2045.Parameter.Name.Error.nonASCII("charsét")) {
+            try RFC_2045.Parameter.Name("charsét")
+        }
     }
 }

@@ -3,3 +3,4 @@ builder:
   configs:
   - documentation_targets:
     - RFC 2045
+    - RFC 2045 Foundation Integration
