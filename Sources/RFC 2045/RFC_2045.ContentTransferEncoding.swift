@@ -1,6 +1,5 @@
 import ASCII
 public import Byte
-import Byte
 
 extension RFC_2045 {
 
@@ -54,7 +53,7 @@ extension RFC_2045.ContentTransferEncoding {
         try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
 
-    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift::Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
 
         let codes: [ASCII.Code]

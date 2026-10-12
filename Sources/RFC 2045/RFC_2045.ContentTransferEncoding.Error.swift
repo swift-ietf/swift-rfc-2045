@@ -1,6 +1,6 @@
 extension RFC_2045.ContentTransferEncoding {
 
-    public enum Error: Swift.Error, Sendable, Equatable {
+    public enum Error: Swift::Error, Sendable, Equatable {
 
         case empty
 

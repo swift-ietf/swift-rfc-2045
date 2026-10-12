@@ -2,7 +2,7 @@ public import ASCII
 
 extension RFC_2045.ContentType {
 
-    public enum Error: Swift.Error, Sendable, Equatable {
+    public enum Error: Swift::Error, Sendable, Equatable {
 
         case empty
 

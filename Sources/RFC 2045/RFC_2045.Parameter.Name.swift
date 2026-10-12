@@ -1,6 +1,5 @@
 import ASCII
 public import Byte
-import Byte
 
 extension RFC_2045.Parameter {
 
@@ -39,7 +38,7 @@ extension RFC_2045.Parameter.Name: Comparable {
     }
 }
 
-extension RFC_2045.Parameter.Name: Swift.RawRepresentable {
+extension RFC_2045.Parameter.Name: Swift::RawRepresentable {
 
     public init?(rawValue: String) {
         do throws(Error) {
@@ -63,7 +62,7 @@ extension RFC_2045.Parameter.Name {
         try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
 
-    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift::Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
 
         guard !bytes.isEmpty else {

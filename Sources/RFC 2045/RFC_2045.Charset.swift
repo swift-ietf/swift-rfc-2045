@@ -1,6 +1,5 @@
 import ASCII
 public import Byte
-import Byte
 
 extension RFC_2045 {
 
@@ -37,7 +36,7 @@ public func == (lhs: RFC_2045.Charset?, rhs: String) -> Bool {
     return lhs.rawValue.uppercased() == rhs.uppercased()
 }
 
-extension RFC_2045.Charset: Swift.RawRepresentable {
+extension RFC_2045.Charset: Swift::RawRepresentable {
 
     public init?(rawValue: String) {
         do throws(Error) {
@@ -61,7 +60,7 @@ extension RFC_2045.Charset {
         try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
 
-    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift::Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
 
         guard !bytes.isEmpty else {
