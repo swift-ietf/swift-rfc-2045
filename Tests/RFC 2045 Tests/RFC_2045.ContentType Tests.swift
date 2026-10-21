@@ -1,5 +1,4 @@
 import Byte
-import Byte
 import RFC_2045
 import Testing
 
@@ -63,8 +62,10 @@ struct `RFC_2045.ContentType Tests` {
         #expect(RFC_2045.ContentType.applicationJSON.subtype == "json")
         #expect(RFC_2045.ContentType.applicationOctetStream.subtype == "octet-stream")
         #expect(RFC_2045.ContentType.imageSVG.subtype == "svg+xml")
-        #expect(RFC_2045.ContentType.applicationXWWWFormURLEncoded.subtype
-            == "x-www-form-urlencoded")
+        #expect(
+            RFC_2045.ContentType.applicationXWWWFormURLEncoded.subtype
+                == "x-www-form-urlencoded"
+        )
     }
 
     @Test
