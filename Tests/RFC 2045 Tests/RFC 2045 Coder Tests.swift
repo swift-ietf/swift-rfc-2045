@@ -5,6 +5,7 @@
     import Coder
     import Cursor
     import Parser
+    import RFC_2045
     import RFC_5322
     import Serializer
     import Testing
