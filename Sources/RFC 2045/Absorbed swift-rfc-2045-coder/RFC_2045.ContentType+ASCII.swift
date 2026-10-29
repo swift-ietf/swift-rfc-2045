@@ -3,10 +3,10 @@
     public import Binary
     public import Byte
 
-    extension RFC_2045.ContentType: @retroactive ASCII.Parseable {}
+    extension RFC_2045.ContentType: ASCII.Parseable {}
 
-    extension RFC_2045.ContentType: @retroactive ASCII.Serializable,
-        @retroactive Binary.Serializable
+    extension RFC_2045.ContentType: ASCII.Serializable,
+        Binary.Serializable
     {
 
         public static func serialize<Buffer: RangeReplaceableCollection>(
@@ -54,7 +54,7 @@
         }
     }
 
-    extension RFC_2045.ContentType: @retroactive Swift::RawRepresentable {
+    extension RFC_2045.ContentType: Swift::RawRepresentable {
 
         public var rawValue: String {
             String(decoding: RFC_2045.ContentType.canonical(self), as: UTF8.self)
@@ -69,7 +69,7 @@
         }
     }
 
-    extension RFC_2045.ContentType: @retroactive CustomStringConvertible {
+    extension RFC_2045.ContentType: CustomStringConvertible {
 
         public var description: String {
             rawValue

@@ -3,9 +3,9 @@
     public import Binary
     public import Byte
 
-    extension RFC_2045.Charset: @retroactive ASCII.Parseable {}
+    extension RFC_2045.Charset: ASCII.Parseable {}
 
-    extension RFC_2045.Charset: @retroactive ASCII.Serializable, @retroactive Binary.Serializable {
+    extension RFC_2045.Charset: ASCII.Serializable, Binary.Serializable {
 
         public static func serialize<Buffer: RangeReplaceableCollection>(
             _ value: RFC_2045.Charset,

@@ -22,13 +22,16 @@ let package = Package(
         ),
     ],
     traits: [
-        .trait(name: "Coder", description: "Wire coders for RFC 2045 media types, transfer encodings, charsets and parameter names")
+        .trait(name: "Coder", description: "Wire coders for RFC 2045 types")
     ],
     dependencies: [
         .package(
             url: "https://github.com/swift-atoms/swift-ascii.git",
             branch: "main",
-            traits: [.trait(name: "Parser", condition: .when(traits: ["Coder"])), .trait(name: "Serializer", condition: .when(traits: ["Coder"]))]
+            traits: [
+                .trait(name: "Parser", condition: .when(traits: ["Coder"])),
+                .trait(name: "Serializer", condition: .when(traits: ["Coder"])),
+            ]
         ),
         .package(
             url: "https://github.com/swift-atoms/swift-byte.git",
@@ -43,13 +46,23 @@ let package = Package(
         .package(
             url: "https://github.com/swift-atoms/swift-parser.git",
             branch: "main",
-            traits: [.trait(name: "Append", condition: .when(traits: ["Coder"])), .trait(name: "IteratorLeaves", condition: .when(traits: ["Coder"])), .trait(name: "Map", condition: .when(traits: ["Coder"])), .trait(name: "Product", condition: .when(traits: ["Coder"])), .trait(name: "Skip", condition: .when(traits: ["Coder"])), .trait(name: "Either", condition: .when(traits: ["Coder"])), .trait(name: "Iterator", condition: .when(traits: ["Coder"]))]
+            traits: [
+                .trait(name: "Append", condition: .when(traits: ["Coder"])),
+                .trait(name: "IteratorLeaves", condition: .when(traits: ["Coder"])),
+                .trait(name: "Map", condition: .when(traits: ["Coder"])),
+                .trait(name: "Product", condition: .when(traits: ["Coder"])),
+                .trait(name: "Skip", condition: .when(traits: ["Coder"])),
+                .trait(name: "Either", condition: .when(traits: ["Coder"])),
+                .trait(name: "Iterator", condition: .when(traits: ["Coder"])),
+            ]
         ),
         .package(url: "https://github.com/swift-atoms/swift-serializer.git", branch: "main"),
         .package(
             url: "https://github.com/swift-atoms/swift-binary.git",
             branch: "main",
-            traits: [.trait(name: "Serializer", condition: .when(traits: ["Coder"]))]
+            traits: [
+                .trait(name: "Serializer", condition: .when(traits: ["Coder"])),
+            ]
         ),
     ],
     targets: [

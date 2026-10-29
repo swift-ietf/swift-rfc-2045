@@ -3,10 +3,10 @@
     public import Binary
     public import Byte
 
-    extension RFC_2045.ContentTransferEncoding: @retroactive ASCII.Parseable {}
+    extension RFC_2045.ContentTransferEncoding: ASCII.Parseable {}
 
-    extension RFC_2045.ContentTransferEncoding: @retroactive ASCII.Serializable,
-        @retroactive Binary.Serializable
+    extension RFC_2045.ContentTransferEncoding: ASCII.Serializable,
+        Binary.Serializable
     {
 
         public static func serialize<Buffer: RangeReplaceableCollection>(
