@@ -1,18 +1,18 @@
 # swift-rfc-2045
 
-Domain model for RFC 2045, the MIME message body format: `RFC_2045.ContentType` with its `RFC_2045.Parameter.Name` keys, `RFC_2045.ContentTransferEncoding`, `RFC_2045.Charset`, and the MIME entries of `RFC_5322.Header.Name`. Every type validates on construction and reads its RFC text form through `init(_:)` / `init(ascii:)`; `ContentType` is also built from structured parts, and the well-known values are static members (`.textPlain`, `.utf8`, `.base64`, `.charset`). The `RFC 2045 Foundation Integration` product bridges the types to `Codable`. Text forms and wire coders — `ContentType.description`, `headerValue` and `rawValue`, the `ASCII.Parseable`, `ASCII.Serializable` and `Binary.Serializable` conformances, `[Byte].init(_:)`, the nested `Coder` types and the `RFC_5322.Header` initializers — live in [swift-rfc-2045-coder](https://github.com/swift-ietf/swift-rfc-2045-coder).
+Use this package when you need to read, build or write the MIME header values of RFC 2045: a `Content-Type` with its parameters, a `Content-Transfer-Encoding`, or a charset name. Start from `RFC_2045.ContentType`, and from `RFC_2045.ContentTransferEncoding` or `RFC_2045.Charset` for those fields alone. For multipart bodies and boundaries, use swift-rfc-2046. To convert a content type to and from the RFC 9110 media type, use swift-media-type-standard.
 
-```swift
-import RFC_2045
+## Laws
 
-let contentType = try RFC_2045.ContentType("text/html; charset=UTF-8")
-contentType.type                                     // "text"
-contentType.charset                                  // RFC_2045.Charset.utf8
-contentType == RFC_2045.ContentType.textHTMLUTF8     // true
-
-let encoding = try RFC_2045.ContentTransferEncoding("quoted-printable")
-encoding.isEncoded                                   // true
-
-let attachment = RFC_2045.ContentType.applicationPDF(name: "invoice.pdf")
-attachment.parameters[.name]                         // "invoice.pdf"
-```
+- Type and subtype are stored lowercase, so `TEXT/HTML` and `text/html` give equal values.
+- Parameter names keep the spelling they were given but compare, hash and sort case-insensitively, so `BOUNDARY=abc` is found under `RFC_2045.Parameter.Name.boundary`.
+- Parameter values are kept and compared exactly as given. `text/plain; charset=utf-8` is therefore not equal to `RFC_2045.ContentType.textPlainUTF8`, whose value is `UTF-8`.
+- A charset name is stored uppercase and compares case-insensitively, so `utf-8` reads back as `UTF-8`.
+- `RFC_2045.ContentType.charset` is nil both when there is no charset parameter and when its value is not a valid charset name.
+- `RFC_2045.ContentType.init(_:)` trims whitespace around the type, subtype, parameter names and values. A parameter value is a token or a quoted string. Quoted pairs are unescaped, and a semicolon inside quotes does not end the parameter. Empty segments, such as a trailing semicolon, are skipped. A parameter without an equals sign, or with an empty unquoted value, is refused.
+- `RFC_2045.ContentType.init(type:subtype:parameters:)` validates the type and subtype as tokens but accepts any parameter value.
+- A transfer encoding name is read case-insensitively, ignoring surrounding spaces and tabs. Only `7bit`, `8bit`, `binary`, `quoted-printable` and `base64` are accepted.
+- `RFC_2045.ContentTransferEncoding.isEncoded` and `RFC_2045.ContentTransferEncoding.isBinarySafe` are both true for `base64` and `quoted-printable` only. `binary` is not binary safe, because it does not survive a seven-bit transport.
+- `RFC_2045.ContentType.rawValue` writes `type/subtype`, then each parameter as `; name=value` in case-insensitive name order. A value that is empty or not a token is quoted, with quotation marks and backslashes escaped. Reading that text back gives an equal value.
+- The wire coders read only what belongs to the value and leave the rest of the input, such as a trailing CRLF. `RFC_2045.ContentType.Coder` stops before a malformed parameter and leaves it unread instead of failing. When a coder fails, the input is restored to where it started.
+- With `RFC 2045 Foundation Integration`, a charset, parameter name or transfer encoding encodes as its text form. A content type encodes as an object with `type`, `subtype` and a `parameters` dictionary keyed by name. Decoding validates the same way the initializers do.
