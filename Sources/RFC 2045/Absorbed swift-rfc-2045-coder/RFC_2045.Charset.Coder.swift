@@ -17,7 +17,7 @@
         public static var coder: Coder<ArraySlice<Byte>, [Byte]> { .init() }
     }
 
-extension RFC_2045.Charset.Coder {
+    extension RFC_2045.Charset.Coder {
         public typealias Output = RFC_2045.Charset
 
         public typealias Failure = RFC_2045.Charset.Error
@@ -39,5 +39,5 @@ extension RFC_2045.Charset.Coder {
         ) throws(Failure) {
             Scan.append(output.rawValue, into: &buffer)
         }
-}
+    }
 #endif

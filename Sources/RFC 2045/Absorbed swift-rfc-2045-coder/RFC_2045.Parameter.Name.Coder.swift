@@ -17,7 +17,7 @@
         public static var coder: Coder<ArraySlice<Byte>, [Byte]> { .init() }
     }
 
-extension RFC_2045.Parameter.Name.Coder {
+    extension RFC_2045.Parameter.Name.Coder {
         public typealias Output = RFC_2045.Parameter.Name
 
         public typealias Failure = RFC_2045.Parameter.Name.Error
@@ -39,5 +39,5 @@ extension RFC_2045.Parameter.Name.Coder {
         ) throws(Failure) {
             Scan.append(output.rawValue, into: &buffer)
         }
-}
+    }
 #endif

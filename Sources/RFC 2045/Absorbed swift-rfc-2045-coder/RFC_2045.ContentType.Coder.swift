@@ -17,7 +17,7 @@
         public static var coder: Coder<ArraySlice<Byte>, [Byte]> { .init() }
     }
 
-extension RFC_2045.ContentType.Coder {
+    extension RFC_2045.ContentType.Coder {
         public typealias Output = RFC_2045.ContentType
 
         public typealias Failure = RFC_2045.ContentType.Error
@@ -127,5 +127,5 @@ extension RFC_2045.ContentType.Coder {
         ) throws(Failure) {
             buffer.append(contentsOf: RFC_2045.ContentType.canonical(output))
         }
-}
+    }
 #endif

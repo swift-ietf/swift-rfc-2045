@@ -17,7 +17,7 @@
         public static var coder: Coder<ArraySlice<Byte>, [Byte]> { .init() }
     }
 
-extension RFC_2045.ContentTransferEncoding.Coder {
+    extension RFC_2045.ContentTransferEncoding.Coder {
         public typealias Output = RFC_2045.ContentTransferEncoding
 
         public typealias Failure = RFC_2045.ContentTransferEncoding.Error
@@ -40,5 +40,5 @@ extension RFC_2045.ContentTransferEncoding.Coder {
         ) throws(Failure) {
             Scan.append(output.rawValue, into: &buffer)
         }
-}
+    }
 #endif
