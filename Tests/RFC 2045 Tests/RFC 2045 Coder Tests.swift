@@ -10,11 +10,13 @@
     import Serializer
     import Testing
 
-    @Suite
-    struct `RFC 2045 Coder Tests` {
-    }
+extension `RFC 2045 Coder Tests`.`RFC 2045 Coder Tests` {
+        @Suite
+        struct `RFC 2045 Coder Tests` {
+        }
+}
 
-    extension `RFC 2045 Coder Tests` {
+    extension `RFC 2045 Coder Tests`.`RFC 2045 Coder Tests` {
         @Suite struct `Content type on the wire` {}
 
         @Suite struct `Content transfer encoding on the wire` {}
@@ -26,7 +28,7 @@
         @Suite struct `MIME headers` {}
     }
 
-    extension `RFC 2045 Coder Tests`.`Content type on the wire` {
+    extension `RFC 2045 Coder Tests`.`RFC 2045 Coder Tests`.`Content type on the wire` {
 
         @Test
         func `reads a media type and stops at the first foreign byte`() throws {
@@ -148,7 +150,7 @@
         }
     }
 
-    extension `RFC 2045 Coder Tests`.`Content transfer encoding on the wire` {
+    extension `RFC 2045 Coder Tests`.`RFC 2045 Coder Tests`.`Content transfer encoding on the wire` {
 
         @Test
         func `reads a mechanism name and stops at the first foreign byte`() throws {
@@ -210,7 +212,7 @@
         }
     }
 
-    extension `RFC 2045 Coder Tests`.`Charset on the wire` {
+    extension `RFC 2045 Coder Tests`.`RFC 2045 Coder Tests`.`Charset on the wire` {
 
         @Test
         func `reads a charset identifier and stops at the first foreign byte`() throws {
@@ -250,7 +252,7 @@
         }
     }
 
-    extension `RFC 2045 Coder Tests`.`Parameter name on the wire` {
+    extension `RFC 2045 Coder Tests`.`RFC 2045 Coder Tests`.`Parameter name on the wire` {
 
         @Test
         func `reads a parameter name and stops at the equals sign`() throws {
@@ -281,7 +283,7 @@
         }
     }
 
-    extension `RFC 2045 Coder Tests`.`MIME headers` {
+    extension `RFC 2045 Coder Tests`.`RFC 2045 Coder Tests`.`MIME headers` {
 
         @Test
         func `a content type becomes an RFC 5322 header`() throws {
