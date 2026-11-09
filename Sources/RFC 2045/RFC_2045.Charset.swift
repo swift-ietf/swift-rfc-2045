@@ -69,22 +69,17 @@ extension RFC_2045.Charset {
 
         let codes: [ASCII.Code]
         do throws(ASCII.Code.Error) {
-            var built: [ASCII.Code] = []
-            built.reserveCapacity(bytes.count)
-            for byte in bytes {
-                built.append(try ASCII.Code(byte))
-            }
-            codes = built
+            codes = try RFC_2045.Grammar.codes(bytes)
         } catch {
             throw Error.nonASCII(String(decoding: bytes, as: UTF8.self))
         }
 
         for code in codes {
-            guard code.isVisible || code == ASCII.Code.hyphen else {
+            guard RFC_2045.Grammar.isTokenCharacter(code) else {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
                     byte: code,
-                    reason: "Charset identifiers must contain only printable ASCII characters"
+                    reason: "Charset identifiers must be tokens: no space, controls or tspecials ()<>@,;:\\\"/[]?="
                 )
             }
         }

@@ -53,6 +53,21 @@ struct `RFC_2045.Charset Tests` {
     }
 
     @Test
+    func `a charset identifier with a tspecial is refused`() {
+        for text in ["utf-8;", "utf/8", "utf=8", "\"utf-8\"", "(utf-8)", "utf,8"] {
+            #expect(throws: RFC_2045.Charset.Error.self) {
+                try RFC_2045.Charset(text)
+            }
+        }
+    }
+
+    @Test
+    func `a charset identifier with non-tspecial symbols is accepted`() throws {
+        let charset = try RFC_2045.Charset("x-user_defined.1+a")
+        #expect(charset.rawValue == "X-USER_DEFINED.1+A")
+    }
+
+    @Test
     func `a charset identifier outside ASCII is refused`() {
         #expect(throws: RFC_2045.Charset.Error.nonASCII("utf-8é")) {
             try RFC_2045.Charset("utf-8é")
