@@ -218,7 +218,7 @@ extension RFC_2045.ContentType {
         let name: RFC_2045.Parameter.Name
         do throws(RFC_2045.Parameter.Name.Error) {
             name = try RFC_2045.Parameter.Name(
-                ascii: nameCodes.lazy.map(\.byte)
+                ascii: nameCodes.lazy.map({ $0.byte })
             )
         } catch {
             throw Error.invalidParameter(text, reason: error.description)

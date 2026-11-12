@@ -62,6 +62,6 @@ extension RFC_2045.Grammar {
     }
 
     static func string(_ codes: some Swift::Collection<ASCII.Code>) -> String {
-        String(decoding: codes.lazy.map(\.underlying), as: UTF8.self)
+        String(decoding: codes.lazy.map({ $0.underlying }), as: UTF8.self)
     }
 }
